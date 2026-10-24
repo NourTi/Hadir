@@ -1,0 +1,13 @@
+{
+  "name": "hadir",
+  "version": "1.0.0",
+  "description": "Hadir: offline-first attendance, grades and automation for university teachers",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=22.13" },
+  "scripts": {
+    "start": "node --disable-warning=ExperimentalWarning server/index.js",
+    "demo": "DEMO_MODE=1 node --disable-warning=ExperimentalWarning server/index.js",
+    "test": "node --disable-warning=ExperimentalWarning --test test/*.test.js"
+  }
+}

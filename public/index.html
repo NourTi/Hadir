@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Hadir | Offline roll call for university teachers</title>
+  <meta name="description" content="Hadir is a roll-call platform for university teachers. Students show a signed QR code, you scan it with no internet, and reports, reminders and grades follow on their own.">
+  <meta name="theme-color" content="#F2F4F9" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0A0F1E" media="(prefers-color-scheme: dark)">
+  <link rel="icon" href="/icons/icon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400..700&family=Public+Sans:wght@400..700&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="/css/base.css">
+  <link rel="stylesheet" href="/css/landing.css">
+  <link rel="stylesheet" href="/css/theme.css">
+</head>
+<body class="landing">
+<script src="js/guard.js"></script>
+  <a class="skip" href="#main" data-i18n="nav.skip">Skip to content</a>
+
+  <header class="top">
+    <div class="wrap top__row">
+      <a class="brand" href="/" aria-label="Hadir">
+        <span class="brand__ar" lang="ar">حاضر</span><span class="brand__en">Hadir</span>
+      </a>
+      <nav class="top__nav" aria-label="Sections">
+        <a href="#how" data-i18n="nav.how">How it works</a>
+        <a href="#security" data-i18n="nav.security">Security</a>
+        <a href="#features" data-i18n="nav.features">Features</a>
+      </nav>
+      <div class="top__tools">
+        <button class="btn btn--subtle btn--sm" id="langBtn" type="button" lang="ar">العربية</button>
+        <button class="icon-btn" id="themeBtn" type="button" aria-label="Theme"></button>
+        <a class="btn btn--primary btn--sm" href="/app/" data-i18n="nav.open">Open the app</a>
+      </div>
+    </div>
+  </header>
+
+  <main id="main">
+    <!-- ============ HERO ============ -->
+    <section class="hero">
+      <div class="wrap hero__grid">
+        <div class="hero__copy">
+          <h1 data-i18n="hero.title">Roll call that works when the Wi-Fi doesn't.</h1>
+          <p class="hero__lead" data-i18n="hero.lead">Students show a signed QR code on their phones. You scan it across the room, with no internet. Reports, reminders and grades follow on their own.</p>
+          <div class="hero__cta">
+            <a class="btn btn--primary btn--lg" href="/app/#/demo" data-i18n="cta.demo">Open the live demo</a>
+            <a class="btn btn--ghost btn--lg" href="#how" data-i18n="cta.how">See how a class runs</a>
+          </div>
+          <p class="hero__note small muted" data-i18n="hero.note">Runs on your own computer or server. English and Arabic.</p>
+        </div>
+
+        <div class="hero__stage" aria-hidden="false">
+          <figure class="register" id="register" aria-label="A roll-call sheet being stamped">
+            <figcaption class="register__head">
+              <div>
+                <p class="register__course">Writing Production · Group B2</p>
+                <p class="register__when" data-i18n="reg.when">Tuesday 08:30, Room B12</p>
+              </div>
+              <p class="register__tally" id="tally" aria-live="off"><span class="num" id="tallyN">0</span> <span data-i18n="reg.marked">marked</span></p>
+            </figcaption>
+            <ol class="register__rows" id="regRows"></ol>
+          </figure>
+
+          <div class="phone" id="phone">
+            <div class="phone__screen">
+              <div class="phone__bar">
+                <span class="stamp stamp--late phone__air"><span data-i18n="phone.air">Airplane mode</span></span>
+                <span class="phone__logo" lang="ar">حاضر</span>
+              </div>
+              <div>
+                <p class="phone__name">Amina Benali</p>
+                <p class="phone__group">Writing Production · Group B2</p>
+              </div>
+              <div class="phone__qr" id="heroQr" role="img" aria-label="A signed attendance code"></div>
+              <div class="phone__timer" aria-hidden="true"><span id="timerBar"></span></div>
+              <p class="phone__count"><span data-i18n="phone.new">New code in</span> <span class="num" id="timerN">30</span> <span data-i18n="phone.s">s</span></p>
+              <p class="phone__fine" data-i18n="phone.key">Signed on this phone. The key never leaves it.</p>
+              <span class="phone__scan" id="scanLine" aria-hidden="true"></span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ HOW A CLASS RUNS ============ -->
+    <section class="section" id="how">
+      <div class="wrap">
+        <div class="section__head">
+          <h2 data-i18n="how.title">The internet is optional in the room.</h2>
+          <p class="section__lead" data-i18n="how.lead">Only the first and last steps use the network. The scan itself never does.</p>
+        </div>
+        <ol class="steps">
+          <li class="step">
+            <p class="step__net"><span class="net net--on" data-i18n="how.net1">Once, online</span></p>
+            <h3 data-i18n="how.s1.t">Join and download</h3>
+            <p data-i18n="how.s1.b">Each student joins with the code you give them. Their phone makes a signing key that never leaves it. Your phone downloads the class list and the public keys.</p>
+          </li>
+          <li class="step step--room">
+            <p class="step__net"><span class="net net--off" data-i18n="how.net2">In the room, no network</span></p>
+            <h3 data-i18n="how.s2.t">Show, scan, done</h3>
+            <p data-i18n="how.s2.b">The student shows their code. You scan it. Your phone checks the signature, the time and the class list in a blink, then marks them present or late.</p>
+          </li>
+          <li class="step">
+            <p class="step__net"><span class="net net--on" data-i18n="how.net3">After class, online</span></p>
+            <h3 data-i18n="how.s3.t">Upload and follow up</h3>
+            <p data-i18n="how.s3.b">Scans upload in one batch. The server checks them again, marks everyone missing as absent, and your rules send the alerts.</p>
+          </li>
+        </ol>
+      </div>
+    </section>
+
+    <!-- ============ SECURITY ============ -->
+    <section class="section section--tint" id="security">
+      <div class="wrap security">
+        <div>
+          <div class="section__head">
+            <h2 data-i18n="sec.title">Why a screenshot can't fake it</h2>
+            <p class="section__lead" data-i18n="sec.lead">Students can say their network failed. With Hadir it doesn't matter, because nothing in the room depends on it.</p>
+          </div>
+          <ul class="checks">
+            <li><span class="checks__mark" data-icon="shield"></span><div><h3 data-i18n="sec.1.t">Signed on the student's phone</h3><p data-i18n="sec.1.b">The key is created on the phone and cannot be exported, so a code cannot be moved to another device.</p></div></li>
+            <li><span class="checks__mark" data-icon="clock"></span><div><h3 data-i18n="sec.2.t">New every 30 seconds</h3><p data-i18n="sec.2.b">Your phone rejects a code older than 45 seconds. A screenshot sent from outside the room is already stale.</p></div></li>
+            <li><span class="checks__mark" data-icon="user"></span><div><h3 data-i18n="sec.3.t">You are in the room</h3><p data-i18n="sec.3.b">You scan the screen yourself, so you see who is holding the phone.</p></div></li>
+            <li><span class="checks__mark" data-icon="phone"></span><div><h3 data-i18n="sec.4.t">One student, one scan</h3><p data-i18n="sec.4.b">A second scan is ignored. A new phone has to be approved by you before it counts.</p></div></li>
+          </ul>
+        </div>
+        <div class="results" aria-label="Examples of scan results">
+          <p class="results__title" data-i18n="res.title">What your phone shows as you scan</p>
+          <ul class="results__list">
+            <li class="result result--ok"><span class="stamp stamp--present" data-i18n="status.present">Present</span><div><p class="result__name">Amina Benali</p><p class="result__why num">08:34 · <span data-i18n="res.ok">signature valid, code fresh</span></p></div></li>
+            <li class="result result--ok"><span class="stamp stamp--late" data-i18n="status.late">Late</span><div><p class="result__name">Racim Haddad</p><p class="result__why num">08:51 · <span data-i18n="res.late">scanned after the late limit</span></p></div></li>
+            <li class="result result--no"><span class="stamp stamp--absent" data-i18n="res.rej">Rejected</span><div><p class="result__name">Sofiane Ziani</p><p class="result__why" data-i18n="res.stale">Code expired. Ask for a fresh one.</p></div></li>
+            <li class="result result--no"><span class="stamp stamp--absent" data-i18n="res.rej">Rejected</span><div><p class="result__name" data-i18n="res.unknown">Unknown student</p><p class="result__why" data-i18n="res.forged">Signature does not match any phone in this group.</p></div></li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ FEATURES ============ -->
+    <section class="section" id="features">
+      <div class="wrap">
+        <div class="section__head">
+          <h2 data-i18n="feat.title">Everything around the roll call</h2>
+        </div>
+        <dl class="ledger-rows">
+          <div class="lrow"><dt><span data-icon="file"></span><span data-i18n="feat.1.t">Excuses with proof</span></dt><dd data-i18n="feat.1.b">Students upload a certificate from their phone. You approve or refuse in one tap, and the absence stops counting.</dd></div>
+          <div class="lrow"><dt><span data-icon="award"></span><span data-i18n="feat.2.t">Grades out of 20</span></dt><dd data-i18n="feat.2.b">Weighted assessments, CEFR levels for writing and speaking, feedback comments, and grades students only see when you publish.</dd></div>
+          <div class="lrow"><dt><span data-icon="zap"></span><span data-i18n="feat.3.t">Rules that run themselves</span></dt><dd data-i18n="feat.3.b">Alerts at 2 and 3 absences, deadline reminders and a weekly digest. Anything formal waits for your approval.</dd></div>
+          <div class="lrow"><dt><span data-icon="chart"></span><span data-i18n="feat.4.t">Reports for the faculty</span></dt><dd data-i18n="feat.4.b">The whole semester on one sheet. Print it, or open the CSV in Excel.</dd></div>
+          <div class="lrow"><dt><span data-icon="phone"></span><span data-i18n="feat.5.t">Installs like an app</span></dt><dd data-i18n="feat.5.b">Add it to your home screen. It opens without a connection and keeps your unsent scans safe until you are back online.</dd></div>
+          <div class="lrow"><dt><span data-icon="globe"></span><span data-i18n="feat.6.t">English and Arabic</span></dt><dd data-i18n="feat.6.b">Switch at any time. The right-to-left layout is complete, including dates, tables and printed reports.</dd></div>
+        </dl>
+      </div>
+    </section>
+
+    <!-- ============ AUTOMATION ============ -->
+    <section class="section section--tint" id="automation">
+      <div class="wrap auto">
+        <div>
+          <div class="section__head">
+            <h2 data-i18n="auto.title">Rules you can read aloud</h2>
+            <p class="section__lead" data-i18n="auto.lead">Each rule is a sentence: when this happens, do that. Run it as a dry run first to see who would be messaged.</p>
+          </div>
+          <ul class="rules">
+            <li class="rule"><p><span data-i18n="auto.when">When</span> <strong data-i18n="auto.r1.t">a student is absent</strong><span>,</span> <strong data-i18n="auto.r1.a">message them and ask for an excuse</strong>.</p></li>
+            <li class="rule"><p><span data-i18n="auto.when">When</span> <strong data-i18n="auto.r2.t">a student reaches 2 absences</strong><span>,</span> <strong data-i18n="auto.r2.a">warn them and tell me</strong>.</p></li>
+            <li class="rule"><p><span data-i18n="auto.when">When</span> <strong data-i18n="auto.r3.t">a student reaches 3 absences</strong><span>,</span> <strong data-i18n="auto.r3.a">write a formal notice and wait for my approval</strong>. <span class="stamp stamp--pending" data-i18n="auto.needs">Needs your approval</span></p></li>
+          </ul>
+        </div>
+        <figure class="bubble-wrap">
+          <figcaption class="small muted" data-i18n="auto.cap">What Amina receives</figcaption>
+          <div class="bubble">
+            <p class="bubble__title" data-i18n="auto.msg.t">Attendance warning</p>
+            <p data-i18n="auto.msg.b">Hello Amina, you now have 2 absences in Group B2. A third absence leads to a formal notice.</p>
+          </div>
+        </figure>
+      </div>
+    </section>
+
+    <!-- ============ REPORT ============ -->
+    <section class="section" id="reports">
+      <div class="wrap report">
+        <div class="section__head">
+          <h2 data-i18n="rep.title">The whole semester on one sheet</h2>
+          <p class="section__lead" data-i18n="rep.lead">Every student, every session, in one glance. Print it for the faculty or export it to Excel.</p>
+          <ul class="legend" aria-label="Legend">
+            <li><i class="cell cell--present"></i><span data-i18n="status.present">Present</span></li>
+            <li><i class="cell cell--late"></i><span data-i18n="status.late">Late</span></li>
+            <li><i class="cell cell--absent"></i><span data-i18n="status.absent">Absent</span></li>
+            <li><i class="cell cell--excused"></i><span data-i18n="status.excused">Excused</span></li>
+          </ul>
+        </div>
+        <div class="matrix-wrap"><div class="matrix" id="matrix" role="img" aria-label="Attendance of 14 students over 16 sessions"></div></div>
+      </div>
+    </section>
+
+    <!-- ============ FINAL CTA ============ -->
+    <section class="section cta">
+      <div class="wrap cta__box">
+        <h2 data-i18n="end.title">Try a class with sample students</h2>
+        <p class="section__lead" data-i18n="end.lead">The demo comes with two groups, six weeks of attendance and ready-made rules.</p>
+        <div class="hero__cta">
+          <a class="btn btn--primary btn--lg" href="/app/#/demo" data-i18n="cta.demo">Open the live demo</a>
+          <a class="btn btn--ghost btn--lg" href="/app/" data-i18n="end.account">Sign in or create an account</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="foot">
+    <div class="wrap foot__row">
+      <p><span class="brand__ar" lang="ar">حاضر</span> <strong>Hadir</strong> <span class="muted" data-i18n="foot.tag">Offline roll call for university teachers</span></p>
+      <p class="small muted"><a href="/app/" data-i18n="nav.open">Open the app</a></p>
+    </div>
+  </footer>
+
+  <script type="module" src="/js/landing.js"></script>
+</body>
+</html>
