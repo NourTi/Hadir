@@ -123,6 +123,73 @@ export function registerCore(app, ctx) {
     return session(db.get('SELECT * FROM users WHERE id = ?', userId), { device_id: deviceId });
   });
 
+  // ---------- self-join: a student scans the class poster, types their own name and ID, and is enrolled ----------
+  const normName = (x) => String(x || '').normalize('NFKC').toLowerCase().replace(/\s+/g, ' ').trim();
+  const joinGroup = (token) => {
+    const g = token && db.get('SELECT g.*, u.full_name AS teacher_name FROM groups g JOIN users u ON u.id = g.teacher_id WHERE g.join_token = ? AND g.archived = 0', String(token));
+    if (!g) throw notFound('join_not_found', 'This join link is not valid. Ask your teacher for a new QR code.');
+    return g;
+  };
+  app.get('/api/join/:token', (req) => {
+    limit(`joininfo:${req.ip}`, 60);
+    const g = joinGroup(req.params.token);
+    return { group: { name: g.name, course_name: g.course_name, teacher_name: g.teacher_name }, open: !!g.join_open };
+  });
+  app.post('/api/join/:token', (req) => {
+    limit(`join:${req.ip}`, 12);
+    const g = joinGroup(req.params.token);
+    if (!g.join_open) throw bad('join_closed', 'Joining is closed for this class. Ask your teacher to open it.');
+    const univ = str(req.body.university_id, 40);
+    const name = str(req.body.full_name, 80);
+    const password = String(req.body.password || '');
+    if (!/^[0-9A-Za-z][0-9A-Za-z\-_/]{3,39}$/.test(univ)) throw bad('bad_university_id', 'Enter your student ID exactly as it is on your student card.');
+    if (name.length < 3) throw bad('name_required', 'Enter your full name.');
+    if (password.length < 8) throw bad('weak_password', 'Use a password with at least 8 characters.');
+    const jwk = sanitizeJwk(req.body.device?.public_jwk);
+    if (!jwk) throw bad('bad_device_key', 'This phone could not create its signing key. Open the link in Chrome or Safari over https.');
+    const deviceId = shortId(10);
+    const label = str(req.body.device?.label, 60) || 'Phone';
+    const lang = req.body.language === 'ar' ? 'ar' : 'en';
+    const userId = db.tx(() => {
+      let st = db.get('SELECT * FROM students WHERE university_id = ?', univ);
+      let uidv;
+      if (!st) {
+        const id = uid();
+        db.run('INSERT INTO students (id, university_id, full_name, created_at) VALUES (?,?,?,?)', id, univ, name, Date.now());
+        st = db.get('SELECT * FROM students WHERE id = ?', id);
+      } else if (st.user_id) {
+        const u = db.get('SELECT * FROM users WHERE id = ?', st.user_id);
+        if (!u || !verifyPassword(password, u.password_hash)) throw bad('already_registered', 'This student ID already has an account. Use the same password you chose before.');
+        uidv = u.id;
+      } else if (normName(st.full_name) !== normName(name)) {
+        throw bad('name_mismatch', 'This ID is already on your teacher\'s list under a different name. Type your name exactly as your teacher listed it.');
+      }
+      if (!uidv) {
+        uidv = uid();
+        db.run('INSERT INTO users (id, role, login, password_hash, full_name, language, created_at) VALUES (?,?,?,?,?,?,?)', uidv, 'student', univ.toLowerCase(), hashPassword(password), st.full_name, lang, Date.now());
+        db.run('UPDATE students SET user_id = ?, invite_code = NULL WHERE id = ?', uidv, st.id);
+      }
+      const hasApproved = db.get("SELECT 1 AS x FROM devices WHERE student_id = ? AND status = 'approved'", st.id);
+      const status = hasApproved && !cfg.demo ? 'pending' : 'approved';
+      db.run('INSERT INTO devices (id, student_id, public_jwk, label, status, created_at) VALUES (?,?,?,?,?,?)', deviceId, st.id, JSON.stringify(jwk), label, status, Date.now());
+      db.run('INSERT OR IGNORE INTO enrollments (group_id, student_id, created_at) VALUES (?,?,?)', g.id, st.id, Date.now());
+      db.audit(uidv, 'student.selfjoin', 'group', g.id, null, { student: st.id, device: deviceId, status });
+      return uidv;
+    });
+    return session(db.get('SELECT * FROM users WHERE id = ?', userId), { device_id: deviceId, device_status: db.get('SELECT status FROM devices WHERE id = ?', deviceId)?.status });
+  });
+  // The teacher's side: get (and create) the join link of a group, open or close it, or replace it with a new one.
+  app.post('/api/groups/:id/join', teacher, (req) => {
+    const g = ownedGroup(req.user.id, req.params.id);
+    let token = g.join_token;
+    let open = g.join_open;
+    if (!token || req.body.regenerate) token = shortId(16);
+    if (req.body.open !== undefined) open = req.body.open ? 1 : 0;
+    db.run('UPDATE groups SET join_token = ?, join_open = ? WHERE id = ?', token, open, g.id);
+    db.audit(req.user.id, 'group.join', 'group', g.id, { open: g.join_open }, { open, regenerate: !!req.body.regenerate });
+    return { token, open: !!open };
+  });
+
   app.get('/api/me', anyone, (req) => ({ user: publicUser(req.user) }));
   app.patch('/api/me', anyone, (req) => {
     const b = req.body;

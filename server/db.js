@@ -190,6 +190,7 @@ export function openDb(file) {
   const raw = new DatabaseSync(file);
   raw.exec('PRAGMA journal_mode = WAL; PRAGMA foreign_keys = ON; PRAGMA busy_timeout = 5000;');
   raw.exec(SCHEMA);
+  for (const col of ['join_token TEXT', 'join_open INTEGER NOT NULL DEFAULT 1']) { try { raw.exec(`ALTER TABLE groups ADD COLUMN ${col}`); } catch { /* already there */ } }
   const cache = new Map();
   const st = (sql) => {
     let s = cache.get(sql);

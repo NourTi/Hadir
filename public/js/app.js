@@ -27,7 +27,7 @@ const TEACHER_ROUTES = [
   R('/excuses', () => import('./views/excuses.js')), R('/automation', () => import('./views/automation.js')),
   R('/automation/:tab', () => import('./views/automation.js')),
   R('/reports', () => import('./views/reports.js')), R('/reports/:id', () => import('./views/reports.js')),
-  R('/access', () => import('./views/access.js')), R('/settings', () => import('./views/settings.js')),
+  R('/access', () => import('./views/access.js')), R('/access/:id', () => import('./views/access.js')), R('/settings', () => import('./views/settings.js')),
 ];
 const STUDENT_ROUTES = [
   R('/me', () => import('./views/me.js')), R('/me/attendance', () => import('./views/me-attendance.js')), R('/me/grades', () => import('./views/me-grades.js')),
@@ -51,6 +51,8 @@ async function boot() {
     try { const s = await api.post('/api/auth/demo', { role: path() === '/demo-student' ? 'student' : 'teacher' }); saveAuth(s.token, s.user); history.replaceState(null, '', '/app/'); location.hash = '#' + (s.user.role === 'student' ? '/me' : '/today'); }
     catch (e) { toast(e.message, 'error'); }
   }
+  const joinMatch = /^\/join\/([\w-]+)/.exec(path());
+  if (joinMatch) { stopView?.(); const { default: mountJoin } = await import('./views/join.js'); return mountJoin(root, joinMatch[1], app); }
   if (!auth.token) return showAuth();
   try { const me = await api.get('/api/me'); saveAuth(auth.token, me.user); } catch (e) { if (!e.offline && e.status === 401) return showAuth(); }
   startSignedIn();

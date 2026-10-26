@@ -1,47 +1,68 @@
-// "Student access": the web address students open on their phones, as a link and a QR code, plus what must be true for it to work.
-import { h, icon, toast } from '../ui.js';
+// "Student access": one QR code per class. A student scans it, types their own name and ID, and is in the class. No list to prepare.
+import { h, icon, toast, confirmDialog, empty } from '../ui.js';
 import { t, addStrings } from '../i18n.js';
 import { api } from '../api.js';
 import { qrSvg } from '../qr.js';
-import { pageHead, sheet, printPage } from '../kit.js';
+import { pageHead, sheet, groupPicker, printPage } from '../kit.js';
 
 addStrings({
   en: {
-    'ac.title': 'Student access', 'ac.sub': 'Students open this address on their own phone, join with the invite code you gave them, and show their code at roll call.',
-    'ac.addr': 'Address for students', 'ac.copy': 'Copy address', 'ac.copied': 'Address copied.', 'ac.print': 'Print a poster for the classroom', 'ac.scan': 'Scan to open Hadir',
-    'ac.ok': 'Ready: this address is secure (https) and reachable from phones.', 'ac.localTitle': 'Students cannot open this address yet',
-    'ac.localText': 'You are on {host}, which only exists on this computer. A phone cannot reach it, and phones only create their secure key on https addresses.',
-    'ac.fix': 'Fastest fix: a free tunnel', 'ac.fix1': 'Install cloudflared (free) on this computer.', 'ac.fix2': 'Keep Hadir running, then run: cloudflared tunnel --url http://localhost:3000', 'ac.fix3': 'Open the https address it prints, sign in there, and come back to this page. The QR code will show that address.',
-    'ac.steps': 'What each student does', 'ac.s1': 'Scans this QR code or opens the address on their phone.', 'ac.s2': 'Taps “Join with code” and enters their student ID, the invite code, and a new password.', 'ac.s3': 'Keeps the page open or adds it to the home screen. Their code is on the first screen.',
-    'ac.codes': 'Where are the invite codes?', 'ac.codesText': 'Open Classes, choose a group, and look at the Account column. A student who lost a code gets a new one from the row menu.', 'ac.goClasses': 'Open Classes',
+    'ac.title': 'Student access', 'ac.sub': 'Show this QR code in class. Each student scans it with their own phone, types their name and student ID, and joins. You do not need to prepare a list.',
+    'ac.noGroups': 'Create a class first', 'ac.noGroupsText': 'Each class gets its own QR code.', 'ac.newGroup': 'New group',
+    'ac.link': 'Join link for {group}', 'ac.copy': 'Copy link', 'ac.copied': 'Link copied.', 'ac.print': 'Print for the classroom', 'ac.scan': 'Scan to join {group}', 'ac.scanSub': 'Open the camera on your phone, scan this code, then enter your name and student ID.',
+    'ac.open': 'Joining is open', 'ac.closed': 'Joining is closed', 'ac.close': 'Close joining', 'ac.reopen': 'Open joining', 'ac.closedHint': 'New students cannot join until you open it again. Students already in the class are not affected.',
+    'ac.renew': 'Make a new code', 'ac.renewTitle': 'Replace this QR code?', 'ac.renewText': 'The printed or shown code stops working. Students already in the class keep their accounts.', 'ac.renewed': 'New code created.',
+    'ac.ok': 'This address is secure and reachable from phones.', 'ac.localTitle': 'Students cannot open this address yet',
+    'ac.localText': 'You are on {host}, which only exists on this computer. Phones cannot reach it, and phones only create their secure key on https addresses. Open this page from your hosted https address instead.',
+    'ac.steps': 'What each student does', 'ac.s1': 'Scans the QR code with the phone camera and opens the page.', 'ac.s2': 'Types their full name, student ID and a password they choose.', 'ac.s3': 'Sees their own QR code, which changes every 30 seconds. You scan it at roll call.',
+    'ac.review': 'After students join', 'ac.reviewText': 'Check the list in Classes. A wrong or fake entry can be removed from the row menu. If a student changes phone, approve the new one in Settings.', 'ac.goClasses': 'Open Classes',
   },
   ar: {
-    'ac.title': 'دخول الطلبة', 'ac.sub': 'يفتح الطلبة هذا العنوان على هواتفهم، وينضمون برمز الدعوة الذي أعطيتهم إياه، ثم يعرضون رمزهم عند تسجيل الحضور.',
-    'ac.addr': 'عنوان الطلبة', 'ac.copy': 'نسخ العنوان', 'ac.copied': 'تم نسخ العنوان.', 'ac.print': 'طباعة ملصق للقاعة', 'ac.scan': 'امسح لفتح «حاضر»',
-    'ac.ok': 'جاهز: العنوان آمن (https) ويمكن الوصول إليه من الهواتف.', 'ac.localTitle': 'لا يستطيع الطلبة فتح هذا العنوان بعد',
-    'ac.localText': 'أنت على {host}، وهو موجود على هذا الحاسوب فقط. لا يصل إليه الهاتف، ولا تنشئ الهواتف مفتاحها الآمن إلا على عناوين https.',
-    'ac.fix': 'أسرع حل: نفق مجاني', 'ac.fix1': 'ثبّت cloudflared (مجاني) على هذا الحاسوب.', 'ac.fix2': 'أبقِ «حاضر» يعمل، ثم نفّذ: cloudflared tunnel --url http://localhost:3000', 'ac.fix3': 'افتح عنوان https الذي يظهر، وسجّل الدخول هناك، ثم عد إلى هذه الصفحة. سيعرض رمز QR ذلك العنوان.',
-    'ac.steps': 'ما يفعله كل طالب', 'ac.s1': 'يمسح رمز QR هذا أو يفتح العنوان على هاتفه.', 'ac.s2': 'يضغط «الانضمام برمز» ويدخل رقمه الجامعي ورمز الدعوة وكلمة سر جديدة.', 'ac.s3': 'يُبقي الصفحة مفتوحة أو يضيفها إلى الشاشة الرئيسية. رمزه في الشاشة الأولى.',
-    'ac.codes': 'أين رموز الدعوة؟', 'ac.codesText': 'افتح «الأفواج» واختر فوجًا وانظر إلى عمود الحساب. من ضاع رمزه يحصل على رمز جديد من قائمة الصف.', 'ac.goClasses': 'فتح الأفواج',
+    'ac.title': 'دخول الطلبة', 'ac.sub': 'اعرض هذا الرمز في القاعة. يمسحه كل طالب بهاتفه، ويكتب اسمه ورقمه الجامعي، وينضم. لا حاجة لتحضير قائمة.',
+    'ac.noGroups': 'أنشئ فوجًا أولًا', 'ac.noGroupsText': 'لكل فوج رمز QR خاص به.', 'ac.newGroup': 'فوج جديد',
+    'ac.link': 'رابط الانضمام إلى {group}', 'ac.copy': 'نسخ الرابط', 'ac.copied': 'تم نسخ الرابط.', 'ac.print': 'طباعة للقاعة', 'ac.scan': 'امسح للانضمام إلى {group}', 'ac.scanSub': 'افتح كاميرا هاتفك وامسح هذا الرمز، ثم أدخل اسمك ورقمك الجامعي.',
+    'ac.open': 'الانضمام مفتوح', 'ac.closed': 'الانضمام مغلق', 'ac.close': 'إغلاق الانضمام', 'ac.reopen': 'فتح الانضمام', 'ac.closedHint': 'لا يستطيع طلبة جدد الانضمام حتى تفتحه من جديد. لا يتأثر الطلبة المسجلون.',
+    'ac.renew': 'إنشاء رمز جديد', 'ac.renewTitle': 'استبدال هذا الرمز؟', 'ac.renewText': 'يتوقف الرمز المطبوع أو المعروض عن العمل. يحتفظ الطلبة المنضمون بحساباتهم.', 'ac.renewed': 'تم إنشاء رمز جديد.',
+    'ac.ok': 'هذا العنوان آمن ويمكن الوصول إليه من الهواتف.', 'ac.localTitle': 'لا يستطيع الطلبة فتح هذا العنوان بعد',
+    'ac.localText': 'أنت على {host}، وهو موجود على هذا الحاسوب فقط. لا تصل إليه الهواتف، ولا تنشئ الهواتف مفتاحها الآمن إلا على عناوين https. افتح هذه الصفحة من عنوانك المستضاف على https.',
+    'ac.steps': 'ما يفعله كل طالب', 'ac.s1': 'يمسح الرمز بكاميرا الهاتف ويفتح الصفحة.', 'ac.s2': 'يكتب اسمه الكامل ورقمه الجامعي وكلمة سر يختارها.', 'ac.s3': 'يرى رمز QR الخاص به، وهو يتغير كل 30 ثانية. تمسحه أنت عند تسجيل الحضور.',
+    'ac.review': 'بعد انضمام الطلبة', 'ac.reviewText': 'راجع القائمة في «الأفواج». يمكن حذف أي إدخال خاطئ أو وهمي من قائمة الصف. وإذا غيّر طالب هاتفه فوافق على الجديد من الإعدادات.', 'ac.goClasses': 'فتح الأفواج',
   },
 });
 
 export default async function mount(root, params, app) {
   app.setTitle(t('ac.title'));
-  const url = `${location.origin}/app/`;
+  const { groups } = await api.get('/api/groups');
+  if (!groups.length) { root.append(pageHead(t('ac.title'), t('ac.sub')), empty(t('ac.noGroups'), t('ac.noGroupsText'), h('a.btn.btn--primary', { href: '#/classes' }, t('ac.newGroup')))); return; }
+  const gid = groups.some((g) => g.id === params.id) ? params.id : groups[0].id;
+  const group = groups.find((g) => g.id === gid);
   const host = location.hostname;
   const privateHost = /^(localhost|127\.|0\.0\.0\.0|\[::1\]|10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.)/.test(host);
   const secure = location.protocol === 'https:' && !privateHost;
-  const qr = h('div.access__qr'); qr.innerHTML = qrSvg(url, { ecl: 'M', border: 2, label: 'Hadir address' });
+  let info = await api.post(`/api/groups/${gid}/join`, {});
+  const body = h('div.stack.stack--lg');
 
-  const status = secure ? h('div.callout', icon('check', 18), h('div', t('ac.ok')))
-    : h('div.callout.callout--warn', icon('alert', 18), h('div.stack.stack--sm', h('strong', t('ac.localTitle')), h('p', t('ac.localText', { host })), h('strong', t('ac.fix')),
-      h('ol.steps', [t('ac.fix1'), t('ac.fix2'), t('ac.fix3')].map((x) => h('li', x)))));
+  const link = () => `${location.origin}/app/#/join/${info.token}`;
+  const apply = async (patch) => { info = await api.post(`/api/groups/${gid}/join`, patch); draw(); };
 
-  root.append(pageHead(t('ac.title'), t('ac.sub'), h('button.btn.btn--ghost.no-print', { type: 'button', onclick: printPage }, icon('print', 16), t('ac.print'))),
-    h('div.stack.stack--lg', status,
-      h('div.cols', sheet(t('ac.addr'), h('div.stack', h('div.access__url.ltr', url), h('div.row.no-print', h('button.btn.btn--primary', { type: 'button', onclick: async () => { try { await navigator.clipboard.writeText(url); toast(t('ac.copied'), 'ok'); } catch { toast(url); } } }, icon('file', 16), t('ac.copy'))),
-        h('div.access__poster', qr, h('p.access__scan', t('ac.scan'))))),
-        h('div.stack', sheet(t('ac.steps'), h('ol.steps', [t('ac.s1'), t('ac.s2'), t('ac.s3')].map((x) => h('li', x)))),
-          sheet(t('ac.codes'), h('div.stack', h('p', t('ac.codesText')), h('div.row.no-print', h('a.btn.btn--ghost', { href: '#/classes' }, t('ac.goClasses')))))))));
+  function draw() {
+    const qr = h('div.access__qr'); qr.innerHTML = qrSvg(link(), { ecl: 'M', border: 2, label: 'Hadir join code' });
+    const status = secure ? h('div.callout', icon('check', 18), h('div', t('ac.ok')))
+      : h('div.callout.callout--warn', icon('alert', 18), h('div.stack.stack--sm', h('strong', t('ac.localTitle')), h('p', t('ac.localText', { host }))));
+    body.replaceChildren(status,
+      h('div.cols',
+        sheet(t('ac.link', { group: group.course_name || group.name }), h('div.stack',
+          h('div.access__poster', { class: info.open ? '' : 'is-closed' }, h('p.access__scan', t('ac.scan', { group: group.course_name || group.name })), qr, h('p.access__sub', t('ac.scanSub'))),
+          h('div.access__url.ltr.no-print', link()),
+          h('div.row.no-print', h('button.btn.btn--primary', { type: 'button', onclick: async () => { try { await navigator.clipboard.writeText(link()); toast(t('ac.copied'), 'ok'); } catch { toast(link()); } } }, icon('file', 16), t('ac.copy')),
+            h('button.btn.btn--ghost', { type: 'button', onclick: printPage }, icon('print', 16), t('ac.print'))))),
+        h('div.stack',
+          sheet(t(info.open ? 'ac.open' : 'ac.closed'), h('div.stack', info.open ? null : h('p.muted', t('ac.closedHint')),
+            h('div.row', h('button.btn.btn--ghost', { type: 'button', onclick: () => apply({ open: !info.open }) }, t(info.open ? 'ac.close' : 'ac.reopen')),
+              h('button.btn.btn--ghost', { type: 'button', onclick: async () => { if (await confirmDialog({ title: t('ac.renewTitle'), message: t('ac.renewText'), confirmLabel: t('ac.renew') })) { await apply({ regenerate: true }); toast(t('ac.renewed'), 'ok'); } } }, t('ac.renew'))))),
+          sheet(t('ac.steps'), h('ol.steps', [t('ac.s1'), t('ac.s2'), t('ac.s3')].map((x) => h('li', x)))),
+          sheet(t('ac.review'), h('div.stack', h('p', t('ac.reviewText')), h('div.row.no-print', h('a.btn.btn--ghost', { href: `#/classes/${gid}` }, t('ac.goClasses'))))))));
+  }
+  root.append(pageHead(t('ac.title'), t('ac.sub'), groupPicker(groups, gid, (v) => app.go(`/access/${v}`))), body);
+  draw();
 }

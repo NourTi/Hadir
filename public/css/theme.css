@@ -150,3 +150,6 @@ html[lang="ar"] .hero-band__quote { font-style: normal; direction: ltr; text-ali
 .register { --ink: #151A18; --ink-2: #48534D; --ink-3: #6A756F; --rule: #DADEDA; --sheet: #fff; --sheet-2: #F7F8F6; --stamp: #1C5A49; --late: #7A5200; --late-soft: #F6ECD2; --late-line: #C98F12; --absent: #A8281F; --absent-soft: #F7E2DF; background: #fff; color: #151A18; }
 .top .icon-btn, .top .btn--subtle { color: var(--ink); }
 @media (max-width: 880px) { .hero-band { align-items: flex-start; } }
+.access__poster.is-closed { opacity: .45; } .access__sub { text-align: center; color: #48534D; font-size: .95rem; max-width: 36ch; }
+.auth--join { grid-template-columns: 1fr; } .auth--join .auth__main { gap: 22px; }
+@media print { .side, .topbar, .tabbar, .pagehead, .callout, .no-print, .sheet__head { display: none !important; } .access__poster { border: 0; } }
