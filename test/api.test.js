@@ -55,7 +55,7 @@ test('create group, import roster (bad rows reported, invites issued)', async ()
   G = g.data.group.id;
   const r = await api('POST', `/api/groups/${G}/students`, { rows: [
     { university_id: '202400000001', full_name: 'Amina Test' }, { university_id: '202400000002', full_name: 'Bilal Test' },
-    { university_id: '202400000003', full_name: 'Chaima Test' }, { university_id: '12', full_name: 'Bad Id' }, { university_id: '202400000009', full_name: '' }] }, T);
+    { university_id: '202400000003', full_name: 'Chaima Test' }, { university_id: 'bad id!', full_name: 'Bad Id' }, { university_id: '202400000009', full_name: '' }] }, T);
   assert.equal(r.data.created, 3);
   assert.equal(r.data.invalid.length, 2);
   assert.equal(r.data.invites.length, 3);
