@@ -37,3 +37,13 @@ test('a closed class refuses new students, and a new code replaces the old link'
   assert.notEqual(fresh.data.token, token);
   assert.equal((await call('GET', `/api/join/${token}`)).status, 404);
 });
+
+test('a student without an ID, or with a short one, can still join', async () => {
+  await call('POST', `/api/groups/${G}/join`, { open: true }, T);
+  const t2 = (await call('GET', `/api/groups/${G}/roster`, null, T)); void t2;
+  const cur = (await call('POST', `/api/groups/${G}/join`, {}, T)).data.token;
+  const none = await call('POST', `/api/join/${cur}`, { full_name: 'Yacine Merabet', university_id: '', password: 'secret123', device: await device() });
+  assert.equal(none.status, 200); assert.match(none.data.user.university_id, /^H\d{7}$/);
+  const short = await call('POST', `/api/join/${cur}`, { full_name: 'Ines Khelifi', university_id: '42', password: 'secret123', device: await device() });
+  assert.equal(short.status, 200); assert.equal(short.data.user.university_id, '42');
+});

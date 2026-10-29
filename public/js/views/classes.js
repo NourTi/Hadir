@@ -110,7 +110,7 @@ function importModal(group, onDone) {
   const info = h('p.muted'); const bad = h('p.form-error');
   const refresh = () => {
     const parsed = parseRoster(ta.value);
-    const okRows = parsed.filter((r) => /^[0-9A-Za-z][0-9A-Za-z\-_/]{3,39}$/.test(r.university_id) && r.full_name);
+    const okRows = parsed.filter((r) => /^[0-9A-Za-z][0-9A-Za-z\-_/]{0,39}$/.test(r.university_id) && r.full_name);
     rows = okRows; info.textContent = okRows.length ? t('imp.preview', { n: okRows.length }) : t('imp.nothing');
     bad.textContent = parsed.length - okRows.length ? t('imp.invalid', { n: parsed.length - okRows.length }) : '';
     addBtn.disabled = !okRows.length; addBtn.textContent = okRows.length ? t('imp.add', { n: okRows.length }) : t('imp.nothing');

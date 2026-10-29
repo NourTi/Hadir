@@ -139,10 +139,12 @@ export function registerCore(app, ctx) {
     limit(`join:${req.ip}`, 12);
     const g = joinGroup(req.params.token);
     if (!g.join_open) throw bad('join_closed', 'Joining is closed for this class. Ask your teacher to open it.');
-    const univ = str(req.body.university_id, 40);
+    let univ = str(req.body.university_id, 40).replace(/\s+/g, '');
     const name = str(req.body.full_name, 80);
     const password = String(req.body.password || '');
-    if (!/^[0-9A-Za-z][0-9A-Za-z\-_/]{3,39}$/.test(univ)) throw bad('bad_university_id', 'Enter your student ID exactly as it is on your student card.');
+    // The student ID is optional. Without one, Hadir gives the student a short ID of its own.
+    if (!univ) { do { univ = 'H' + String(Math.floor(Math.random() * 1e7)).padStart(7, '0'); } while (db.get('SELECT 1 AS x FROM students WHERE university_id = ?', univ)); }
+    if (!/^[0-9A-Za-z][0-9A-Za-z\-_/]{0,39}$/.test(univ)) throw bad('bad_university_id', 'Use only letters, numbers, - or / in the student ID, or leave it empty.');
     if (name.length < 3) throw bad('name_required', 'Enter your full name.');
     if (password.length < 8) throw bad('weak_password', 'Use a password with at least 8 characters.');
     const jwk = sanitizeJwk(req.body.device?.public_jwk);
@@ -323,7 +325,7 @@ export function registerCore(app, ctx) {
       rows.forEach((r, i) => {
         const univ = str(r.university_id, 40);
         const name = str(r.full_name, 80);
-        if (!/^[0-9A-Za-z][0-9A-Za-z\-_/]{3,39}$/.test(univ)) return out.invalid.push({ row: i + 1, reason: 'bad_university_id', value: univ });
+        if (!/^[0-9A-Za-z][0-9A-Za-z\-_/]{0,39}$/.test(univ)) return out.invalid.push({ row: i + 1, reason: 'bad_university_id', value: univ });
         if (!name) return out.invalid.push({ row: i + 1, reason: 'name_required', value: univ });
         let s = db.get('SELECT * FROM students WHERE university_id = ?', univ);
         if (!s) {

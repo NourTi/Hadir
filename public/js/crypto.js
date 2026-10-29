@@ -43,7 +43,7 @@ export function parseCode(text) {
   if (parts.length !== 5 || parts[0] !== 'HD1') return null;
   const [, univ_id, device_id, ts, sig] = parts;
   const t = Number(ts);
-  if (!/^[0-9A-Za-z][0-9A-Za-z\-_/]{3,39}$/.test(univ_id) || !/^[a-z0-9]{6,20}$/i.test(device_id) || !Number.isInteger(t) || !/^[A-Za-z0-9_-]{80,100}$/.test(sig)) return null;
+  if (!/^[0-9A-Za-z][0-9A-Za-z\-_/]{0,39}$/.test(univ_id) || !/^[a-z0-9]{6,20}$/i.test(device_id) || !Number.isInteger(t) || !/^[A-Za-z0-9_-]{80,100}$/.test(sig)) return null;
   return { univ_id, device_id, t, sig };
 }
 
