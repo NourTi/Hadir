@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Download Hadir for your computer</title>
+  <meta name="description" content="Download Hadir, the offline roll-call app for university educators. Free, runs on your own computer, English and Arabic.">
+  <meta name="theme-color" content="#F1F2F0" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0E1311" media="(prefers-color-scheme: dark)">
+  <link rel="icon" href="/icons/icon.svg" type="image/svg+xml">
+  <link rel="icon" href="/icons/favicon-32.png" sizes="32x32" type="image/png">
+  <link rel="stylesheet" href="/css/fonts.css">
+  <link rel="stylesheet" href="/css/base.css">
+  <link rel="stylesheet" href="/css/landing.css">
+  <link rel="stylesheet" href="/css/theme.css">
+  <link rel="stylesheet" href="/css/download.css">
+</head>
+<body class="landing dl">
+<script src="/js/guard.js"></script>
+  <a class="skip" href="#main" data-i18n="nav.skip">Skip to content</a>
+  <header class="top">
+    <div class="wrap top__row">
+      <a class="brand" href="/" aria-label="Hadir"><span class="brand__ar" lang="ar">حاضر</span><span class="brand__en">Hadir</span></a>
+      <nav class="top__nav" aria-label="Sections">
+        <a href="#install" data-i18n="nav.install">Install</a>
+        <a href="#students" data-i18n="nav.students">Students</a>
+        <a href="#faq" data-i18n="nav.faq">Questions</a>
+        <a href="/" data-i18n="nav.home">Home</a>
+      </nav>
+      <div class="top__tools">
+        <button class="btn btn--subtle btn--sm" id="langBtn" type="button" lang="ar">العربية</button>
+        <button class="icon-btn" id="themeBtn" type="button" aria-label="Theme"></button>
+      </div>
+    </div>
+  </header>
+
+  <main id="main">
+    <section class="hero dlhero">
+      <div class="wrap dlhero__grid">
+        <div>
+          <p class="kicker" data-i18n="hero.kicker">Hadir for desktop</p>
+          <h1 data-i18n="hero.title">Take Hadir to your own computer.</h1>
+          <p class="hero__lead" data-i18n="hero.lead">Free. Your classes, students and grades stay on your computer, in a folder you own. Nothing to host and nothing to pay for.</p>
+          <div class="hero__cta">
+            <a class="btn btn--primary btn--lg" id="dlWin" href="https://github.com/NourTi/Hadir/releases/latest/download/Hadir-Setup.exe" rel="noopener"><span data-icon="download"></span><span data-i18n="dl.win">Download for Windows</span></a>
+            <a class="btn btn--ghost btn--lg" href="https://github.com/NourTi/Hadir/releases/latest/download/Hadir-Portable.exe" rel="noopener" data-i18n="dl.portable">Portable version, no install</a>
+          </div>
+          <p class="hero__note small muted"><span data-i18n="dl.other">macOS and Linux: build it from the source in two commands.</span> <a href="#source" data-i18n="dl.otherLink">See how</a></p>
+          <ul class="facts" aria-label="Facts">
+            <li><span data-icon="monitor"></span><span data-i18n="fact.os">Windows 10 or 11, 64-bit</span></li>
+            <li><span data-icon="shield"></span><span data-i18n="fact.priv">No tracking, no outside requests</span></li>
+            <li><span data-icon="globe"></span><span data-i18n="fact.lang">English and Arabic</span></li>
+            <li><span data-icon="wifioff"></span><span data-i18n="fact.off">Roll call with no internet</span></li>
+          </ul>
+        </div>
+        <figure class="dlshot"><img src="/download/hadir-desktop.png" alt="" width="1100" height="690"><figcaption class="small muted" data-i18n="shot.cap">Hadir on the desktop, with an educator's own portal.</figcaption></figure>
+      </div>
+    </section>
+
+    <section class="section" id="install">
+      <div class="wrap">
+        <h2 data-i18n="inst.title">Installed in four steps</h2>
+        <ol class="steps4">
+          <li><span class="n">1</span><h3 data-i18n="inst.1.t">Download</h3><p data-i18n="inst.1.b">Use the green button above. The installer is about 95 MB.</p></li>
+          <li><span class="n">2</span><h3 data-i18n="inst.2.t">Open it</h3><p data-i18n="inst.2.b">Windows may say "Windows protected your PC", because the app is new and not yet signed. Choose More info, then Run anyway.</p></li>
+          <li><span class="n">3</span><h3 data-i18n="inst.3.t">Create your account</h3><p data-i18n="inst.3.b">Enter your name and email, add your title and subjects, and pick a colour. Save the recovery code it shows you: it is how you get back in if you forget your password.</p></li>
+          <li><span class="n">4</span><h3 data-i18n="inst.4.t">Add a class</h3><p data-i18n="inst.4.b">Create a group, paste your student list or let students join with a QR code, and start your first roll call.</p></li>
+        </ol>
+      </div>
+    </section>
+
+    <section class="section section--alt" id="students">
+      <div class="wrap two">
+        <div>
+          <h2 data-i18n="stu.title">How your students connect</h2>
+          <p class="section__lead" data-i18n="stu.lead">A phone only creates its signing key on a secure https address, so students need a link that opens on https. You set it up once.</p>
+        </div>
+        <ol class="steps-compact">
+          <li data-i18n="stu.1">Make a free static address that points to your computer, for example an ngrok static domain.</li>
+          <li data-i18n="stu.2">In Hadir, open Settings, Student address, and paste it.</li>
+          <li data-i18n="stu.3">Open Student access, show the class QR code, and students join from their phones.</li>
+          <li data-i18n="stu.4">From then on, roll call needs no internet in the room: students show their code, you scan it.</li>
+        </ol>
+      </div>
+    </section>
+
+    <section class="section" id="features">
+      <div class="wrap">
+        <h2 data-i18n="feat.title">What you get</h2>
+        <div class="cards3">
+          <article><span data-icon="qr"></span><h3 data-i18n="f.1.t">Offline roll call</h3><p data-i18n="f.1.b">Signed QR codes, checked on your device. A screenshot cannot fake one.</p></article>
+          <article><span data-icon="user"></span><h3 data-i18n="f.2.t">Your own portal</h3><p data-i18n="f.2.b">Your title, university, subjects and colour. Colleagues can create their own accounts on the same computer, and cannot see yours.</p></article>
+          <article><span data-icon="award"></span><h3 data-i18n="f.3.t">Grades and excuses</h3><p data-i18n="f.3.b">Grades out of 20 with CEFR levels, and excuses with proof you approve in one tap.</p></article>
+          <article><span data-icon="zap"></span><h3 data-i18n="f.4.t">Automatic follow-up</h3><p data-i18n="f.4.b">Alerts after 2 and 3 absences, deadline reminders and a weekly digest. Formal notices wait for your approval.</p></article>
+          <article><span data-icon="chart"></span><h3 data-i18n="f.5.t">Reports</h3><p data-i18n="f.5.b">The semester on one sheet. Print it or open the CSV in Excel.</p></article>
+          <article><span data-icon="shield"></span><h3 data-i18n="f.6.t">Private by design</h3><p data-i18n="f.6.b">Data stays in your folder. Passwords are hashed, accounts lock after repeated failures, and there is a recovery code if you forget yours.</p></article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section section--alt" id="source">
+      <div class="wrap two">
+        <div>
+          <h2 data-i18n="src.title">Source code and other systems</h2>
+          <p class="section__lead" data-i18n="src.lead">Hadir is open for you to read. Every release lists a checksum so you can verify your download.</p>
+          <div class="hero__cta">
+            <a class="btn btn--ghost" href="https://github.com/NourTi/Hadir" rel="noopener"><span data-icon="code"></span><span data-i18n="src.repo">View the repository</span></a>
+            <a class="btn btn--ghost" href="https://github.com/NourTi/Hadir/releases" rel="noopener" data-i18n="src.releases">All releases</a>
+          </div>
+        </div>
+        <pre class="code ltr" aria-label="Build commands"><code>git clone https://github.com/NourTi/Hadir.git
+cd Hadir/desktop
+npm install
+npm run dist</code></pre>
+      </div>
+    </section>
+
+    <section class="section" id="faq">
+      <div class="wrap faq">
+        <h2 data-i18n="faq.title">Questions</h2>
+        <details><summary data-i18n="faq.1.q">Is it really free?</summary><p data-i18n="faq.1.a">Yes. There is no hosting, no database to rent and no subscription. It runs on your computer.</p></details>
+        <details><summary data-i18n="faq.2.q">Where is my data?</summary><p data-i18n="faq.2.a">In your app-data folder, for example %APPDATA%\Hadir on Windows. Use Hadir, Back up now, in the app menu, to copy it somewhere safe.</p></details>
+        <details><summary data-i18n="faq.3.q">I forgot my password.</summary><p data-i18n="faq.3.a">Choose Forgot your password on the sign-in page and enter your email, your recovery code and a new password. No code? The owner of the computer can issue a one-time code from Settings.</p></details>
+        <details><summary data-i18n="faq.4.q">Does roll call need internet?</summary><p data-i18n="faq.4.a">No. Students join once, online. After that the codes are made on their phones and checked on your computer, in a room with no network at all.</p></details>
+        <details><summary data-i18n="faq.5.q">Can colleagues use it too?</summary><p data-i18n="faq.5.a">Yes. Each educator creates an account on the same computer, or installs their own copy. Educators never see each other's classes.</p></details>
+      </div>
+    </section>
+  </main>
+
+  <footer class="foot">
+    <div class="wrap foot__row">
+      <p><span class="brand__ar" lang="ar">حاضر</span> <strong>Hadir</strong> <span class="muted" data-i18n="foot.by">by Nour Mohammed Abdessamed</span></p>
+      <p class="small muted"><a href="https://github.com/NourTi/Hadir" rel="noopener">GitHub</a> · <a href="https://www.facebook.com/abdessamednour" rel="noopener">Facebook</a> · <a href="/" data-i18n="nav.home">Home</a></p>
+    </div>
+  </footer>
+  <script type="module" src="/js/download.js"></script>
+</body>
+</html>

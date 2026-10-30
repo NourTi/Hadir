@@ -17,17 +17,73 @@
     "appId": "dz.hadir.desktop",
     "productName": "Hadir",
     "copyright": "Hadir",
-    "directories": { "output": "dist", "buildResources": "build" },
-    "files": ["main.cjs", "package.json"],
-    "extraResources": [
-      { "from": "../server", "to": "app/server", "filter": ["**/*"] },
-      { "from": "../public", "to": "app/public", "filter": ["**/*"] },
-      { "from": "../package.json", "to": "app/package.json" }
+    "directories": {
+      "output": "dist",
+      "buildResources": "build"
+    },
+    "files": [
+      "main.cjs",
+      "package.json"
     ],
-    "win": { "target": [{ "target": "nsis", "arch": ["x64"] }, { "target": "portable", "arch": ["x64"] }], "icon": "build/icon.ico" },
-    "nsis": { "oneClick": false, "perMachine": false, "allowToChangeInstallationDirectory": true, "shortcutName": "Hadir", "artifactName": "Hadir-Setup-${version}.${ext}" },
-    "portable": { "artifactName": "Hadir-Portable-${version}.${ext}" },
-    "mac": { "target": "dmg", "icon": "build/icon.icns", "category": "public.app-category.education" },
-    "linux": { "target": ["AppImage"], "icon": "build/icon.png", "category": "Education", "artifactName": "Hadir-${version}.${ext}" }
+    "extraResources": [
+      {
+        "from": "../server",
+        "to": "app/server",
+        "filter": [
+          "**/*"
+        ]
+      },
+      {
+        "from": "../public",
+        "to": "app/public",
+        "filter": [
+          "**/*"
+        ]
+      },
+      {
+        "from": "../package.json",
+        "to": "app/package.json"
+      }
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "build/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "shortcutName": "Hadir",
+      "artifactName": "Hadir-Setup.${ext}"
+    },
+    "portable": {
+      "artifactName": "Hadir-Portable.${ext}"
+    },
+    "mac": {
+      "target": "dmg",
+      "icon": "build/icon.icns",
+      "category": "public.app-category.education"
+    },
+    "linux": {
+      "target": [
+        "AppImage"
+      ],
+      "icon": "build/icon.png",
+      "category": "Education",
+      "artifactName": "Hadir-${version}.${ext}"
+    }
   }
 }

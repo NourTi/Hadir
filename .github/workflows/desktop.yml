@@ -31,9 +31,29 @@ jobs:
         with:
           name: Hadir-Windows
           path: |
-            desktop/dist/Hadir-Setup-*.exe
-            desktop/dist/Hadir-Portable-*.exe
+            desktop/dist/Hadir-Setup.exe
+            desktop/dist/Hadir-Portable.exe
           if-no-files-found: error
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: windows
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: Hadir-Windows
+      - name: Checksums
+        run: sha256sum Hadir-Setup.exe Hadir-Portable.exe > SHA256SUMS.txt && cat SHA256SUMS.txt
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            Hadir-Setup.exe
+            Hadir-Portable.exe
+            SHA256SUMS.txt
+          generate_release_notes: true
 
   linux-mac:
     if: github.event_name == 'workflow_dispatch'

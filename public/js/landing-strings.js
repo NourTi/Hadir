@@ -3,7 +3,7 @@ import { addStrings } from './i18n.js';
 addStrings({
   en: {
     'meta.title': 'Hadir | Offline roll call for university teachers',
-    'nav.skip': 'Skip to content', 'nav.how': 'How it works', 'nav.security': 'Security', 'nav.features': 'Features', 'nav.open': 'Open the app',
+    'nav.skip': 'Skip to content', 'nav.how': 'How it works', 'nav.security': 'Security', 'nav.features': 'Features', 'nav.open': 'Open the app', 'nav.download': 'Download', 'cta.download': 'Download the desktop app',
     'hero.title': "Roll call that works when the Wi\u2011Fi doesn't.",
     'hero.lead': 'Students show a signed QR code on their phones. You scan it across the room, with no internet. Reports, reminders and grades follow on their own.',
     'hero.note': 'Runs on your own computer or server. English and Arabic.',
@@ -40,7 +40,7 @@ addStrings({
   },
   ar: {
     'meta.title': 'حاضر | تسجيل الحضور بدون إنترنت لأساتذة الجامعة',
-    'nav.skip': 'انتقل إلى المحتوى', 'nav.how': 'كيف يعمل', 'nav.security': 'الأمان', 'nav.features': 'المزايا', 'nav.open': 'افتح التطبيق',
+    'nav.skip': 'انتقل إلى المحتوى', 'nav.how': 'كيف يعمل', 'nav.security': 'الأمان', 'nav.features': 'المزايا', 'nav.open': 'افتح التطبيق', 'nav.download': 'التحميل', 'cta.download': 'حمّل تطبيق سطح المكتب',
     'hero.title': 'تسجيل حضور يعمل حتى بدون إنترنت.',
     'hero.lead': 'يعرض الطلبة رمز QR موقَّعًا على هواتفهم، وتمسحه أنت داخل القاعة بدون إنترنت. أما التقارير والتنبيهات والنقاط فتتولاها المنصة تلقائيًا.',
     'hero.note': 'يعمل على حاسوبك أو خادمك الخاص، بالعربية والإنجليزية.',

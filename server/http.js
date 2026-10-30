@@ -136,7 +136,10 @@ export class App {
 
   serveStatic(req, res) {
     if (req.method !== 'GET' && req.method !== 'HEAD') throw new HttpError(405, 'method_not_allowed', 'Method not allowed.');
-    let rel = req.path === '/app' ? '/app/' : req.path;
+    let rel = req.path;
+    if (!rel.endsWith('/') && !path.extname(rel)) { // /download -> /download/
+      try { if (fs.statSync(path.normalize(path.join(this.publicDir, rel))).isDirectory()) { res.writeHead(301, { Location: rel + '/' }); return res.end(); } } catch { /* fall through to not found */ }
+    }
     if (rel.endsWith('/')) rel += 'index.html';
     const file = path.normalize(path.join(this.publicDir, rel));
     if (!file.startsWith(this.publicDir + path.sep)) throw notFound();
