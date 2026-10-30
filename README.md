@@ -226,11 +226,7 @@ node scripts/fetch-fonts.mjs   # after: npm i --no-save @fontsource-variable/new
 
 ### Releasing
 
-```bash
-git tag v1.1.0 && git push origin v1.1.0
-```
-
-The workflow builds `Hadir-Setup.exe` and `Hadir-Portable.exe` and attaches them to the release. Because the file names are fixed, the link `releases/latest/download/Hadir-Setup.exe` always points at the newest version.
+Bump `version` in `desktop/package.json` and push to the `desktop` branch (or push a `v*` tag). The workflow creates the tag and the release itself, so there is nothing else to do. It builds `Hadir-Setup.exe` and `Hadir-Portable.exe` and attaches them to the release. Because the file names are fixed, the link `releases/latest/download/Hadir-Setup.exe` always points at the newest version.
 
 ## Roadmap
 
