@@ -1,6 +1,7 @@
 import path from 'node:path';
 import fs from 'node:fs';
 import crypto from 'node:crypto';
+import os from 'node:os';
 import { fileURLToPath } from 'node:url';
 import { App } from './http.js';
 import { openDb } from './db.js';
@@ -18,7 +19,7 @@ export async function createServer(opts = {}) {
   const db = openDb(dbFile);
   let secret = opts.secret ?? process.env.HADIR_SECRET ?? db.kvGet('secret');
   if (!secret) { secret = crypto.randomBytes(32).toString('hex'); db.kvSet('secret', secret); }
-  const base = dbFile === ':memory:' ? fs.mkdtempSync(path.join(process.env.TMPDIR || '/tmp', 'hadir-')) : dataDir;
+  const base = dbFile === ':memory:' ? fs.mkdtempSync(path.join(os.tmpdir(), 'hadir-')) : dataDir;
   const cfg = {
     secret, demo: opts.demo ?? /^(1|true)$/i.test(process.env.DEMO_MODE || ''),
     desktop: opts.desktop ?? /^(1|true)$/i.test(process.env.HADIR_DESKTOP || ''),

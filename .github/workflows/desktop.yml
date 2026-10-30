@@ -15,16 +15,18 @@ jobs:
         with:
           node-version: 22
       - name: Tests
-        run: npm test
+        shell: bash
+        run: |
+          npm test > test.log 2>&1 || { echo "::error title=tests failed::$(grep -E 'not ok|error:|Error' test.log | head -8 | tr '\n' ' ' | cut -c1-900)"; exit 1; }
       - name: Bundle the fonts (so the app never calls another site)
         run: |
           npm install --no-save --no-package-lock @fontsource-variable/newsreader @fontsource-variable/public-sans @fontsource/ibm-plex-sans-arabic
           node scripts/fetch-fonts.mjs
       - name: Build the installer
         working-directory: desktop
+        shell: bash
         run: |
-          npm install --no-package-lock
-          npm run dist
+          (npm install --no-package-lock && npm run dist) > build.log 2>&1 || { echo "::error title=build failed::$(grep -iE 'error|failed|cannot' build.log | head -8 | tr '\n' ' ' | cut -c1-900)"; exit 1; }
       - uses: actions/upload-artifact@v4
         with:
           name: Hadir-Windows
