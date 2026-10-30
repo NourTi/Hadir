@@ -36,13 +36,14 @@ export default async function mount(root, params, app) {
   if (!groups.length) { root.append(pageHead(t('ac.title'), t('ac.sub')), empty(t('ac.noGroups'), t('ac.noGroupsText'), h('a.btn.btn--primary', { href: '#/classes' }, t('ac.newGroup')))); return; }
   const gid = groups.some((g) => g.id === params.id) ? params.id : groups[0].id;
   const group = groups.find((g) => g.id === gid);
-  const host = location.hostname;
+  const baseUrl = app.config?.public_url || location.origin;
+  const host = new URL(baseUrl).hostname;
   const privateHost = /^(localhost|127\.|0\.0\.0\.0|\[::1\]|10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.)/.test(host);
-  const secure = location.protocol === 'https:' && !privateHost;
+  const secure = new URL(baseUrl).protocol === 'https:' && !privateHost;
   let info = await api.post(`/api/groups/${gid}/join`, {});
   const body = h('div.stack.stack--lg');
 
-  const link = () => `${location.origin}/app/#/join/${info.token}`;
+  const link = () => `${baseUrl}/app/#/join/${info.token}`;
   const apply = async (patch) => { info = await api.post(`/api/groups/${gid}/join`, patch); draw(); };
 
   function draw() {

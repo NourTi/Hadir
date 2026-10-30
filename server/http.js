@@ -1,4 +1,5 @@
 import http from 'node:http';
+import https from 'node:https';
 import fs from 'node:fs';
 import path from 'node:path';
 
@@ -18,16 +19,31 @@ const MIME = {
 };
 
 const CSP = [
-  "default-src 'self'", "script-src 'self'", "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-  "font-src 'self' https://fonts.gstatic.com", "img-src 'self' data: blob:", "connect-src 'self'",
-  "media-src 'self' blob:", "worker-src 'self'", "manifest-src 'self'", "frame-ancestors 'none'", "base-uri 'self'", "form-action 'self'",
+  "default-src 'self'", "script-src 'self'", "style-src 'self' 'unsafe-inline'",
+  "font-src 'self'", "img-src 'self' data: blob:", "connect-src 'self'",
+  "media-src 'self' blob:", "worker-src 'self'", "manifest-src 'self'", "frame-ancestors 'none'", "base-uri 'self'", "form-action 'self'", "object-src 'none'",
 ].join('; ');
 
 export class App {
-  constructor({ publicDir, maxBody = 6 * 1024 * 1024 }) {
+  constructor({ publicDir, maxBody = 256 * 1024, bigBody = 6 * 1024 * 1024, bigPaths = ['/api/excuses'], strictHost = false, allowedHosts = [] }) {
     this.routes = [];
     this.publicDir = publicDir;
-    this.maxBody = maxBody;
+    this.maxBody = maxBody; this.bigBody = bigBody; this.bigPaths = bigPaths;
+    this.strictHost = strictHost; this.allowedHosts = new Set(allowedHosts.map((x) => x.toLowerCase()));
+  }
+  // Refuse requests that were not meant for this server. A web page on another site cannot reach a local Hadir through DNS tricks,
+  // because the Host header must be localhost, an IP address, a .local name, or a name the owner listed.
+  hostOk(req) {
+    const raw = String(req.headers.host || '').toLowerCase();
+    const host = raw.startsWith('[') ? raw.slice(0, raw.indexOf(']') + 1) : raw.replace(/:\d+$/, '');
+    if (!this.strictHost) return !!host;
+    return host === 'localhost' || host.endsWith('.localhost') || host.endsWith('.local') || /^\d{1,3}(\.\d{1,3}){3}$/.test(host) || host.startsWith('[') || this.allowedHosts.has(host);
+  }
+  originOk(req) {
+    if (req.method === 'GET' || req.method === 'HEAD' || req.method === 'OPTIONS') return true;
+    const origin = req.headers.origin;
+    if (!origin) return true;
+    try { return new URL(origin).host.toLowerCase() === String(req.headers.host || '').toLowerCase(); } catch { return false; }
   }
   route(method, pattern, ...handlers) {
     const keys = [];
@@ -41,14 +57,17 @@ export class App {
   del(p, ...h) { this.route('DELETE', p, ...h); }
 
   readBody(req) {
+    const cap = this.bigPaths.includes(req.path) ? this.bigBody : this.maxBody;
     return new Promise((resolve, reject) => {
-      const chunks = []; let size = 0;
+      const chunks = []; let size = 0, over = false;
       req.on('data', (c) => {
+        if (over) return;
         size += c.length;
-        if (size > this.maxBody) { reject(new HttpError(413, 'too_large', 'That upload is too large.')); req.destroy(); return; }
+        if (size > cap) { over = true; chunks.length = 0; reject(new HttpError(413, 'too_large', 'That upload is too large.')); return; }
         chunks.push(c);
       });
       req.on('end', () => {
+        if (over) return;
         if (!chunks.length) return resolve({});
         try { resolve(JSON.parse(Buffer.concat(chunks).toString('utf8'))); } catch { reject(bad('bad_json', 'The request body is not valid JSON.')); }
       });
@@ -69,13 +88,20 @@ export class App {
     res.setHeader('X-Content-Type-Options', 'nosniff');
     res.setHeader('Referrer-Policy', 'same-origin');
     res.setHeader('X-Frame-Options', 'DENY');
-    res.setHeader('Permissions-Policy', 'camera=(self), geolocation=(), microphone=()');
+    res.setHeader('Permissions-Policy', 'camera=(self), geolocation=(), microphone=(), payment=(), usb=()');
     res.setHeader('Content-Security-Policy', CSP);
+    res.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
+    res.setHeader('Cross-Origin-Resource-Policy', 'same-origin');
+    if (req.socket.encrypted || req.headers['x-forwarded-proto'] === 'https') res.setHeader('Strict-Transport-Security', 'max-age=31536000');
     try {
+      if (!this.hostOk(req)) throw new HttpError(421, 'bad_host', 'This address is not allowed.');
+      if (!this.originOk(req)) throw new HttpError(403, 'bad_origin', 'This request came from another site.');
       const url = new URL(req.url, 'http://localhost');
       req.path = decodeURIComponent(url.pathname);
       req.query = Object.fromEntries(url.searchParams);
       req.ip = req.socket.remoteAddress;
+      // Behind a tunnel on this same computer every request arrives from loopback, so trust the forwarded address only then.
+      if (/^(::1|127\.0\.0\.1|::ffff:127\.0\.0\.1)$/.test(req.ip) && req.headers['x-forwarded-for']) req.ip = String(req.headers['x-forwarded-for']).split(',')[0].trim().slice(0, 64);
       if (req.path.startsWith('/api/')) return await this.api(req, res);
       return this.serveStatic(req, res);
     } catch (e) {
@@ -127,8 +153,9 @@ export class App {
     fs.createReadStream(file).pipe(res);
   }
 
-  listen(port, host = '0.0.0.0') {
-    this.server = http.createServer((req, res) => this.handle(req, res));
+  listen(port, host = '0.0.0.0', tls = null) {
+    this.server = (tls ? https.createServer(tls, (req, res) => this.handle(req, res)) : http.createServer((req, res) => this.handle(req, res)));
+    this.server.requestTimeout = 30000; this.server.headersTimeout = 15000; this.server.maxHeadersCount = 60;
     return new Promise((resolve) => this.server.listen(port, host, () => resolve(this.server)));
   }
   close() { return new Promise((r) => (this.server ? this.server.close(() => r()) : r())); }

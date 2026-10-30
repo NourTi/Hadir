@@ -1,0 +1,33 @@
+{
+  "name": "hadir-desktop",
+  "version": "1.1.0",
+  "description": "Hadir: attendance, grades and reminders for university educators, as a desktop app",
+  "author": "Hadir",
+  "private": true,
+  "main": "main.cjs",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder --publish never"
+  },
+  "devDependencies": {
+    "electron": "^37.2.0",
+    "electron-builder": "^26.0.12"
+  },
+  "build": {
+    "appId": "dz.hadir.desktop",
+    "productName": "Hadir",
+    "copyright": "Hadir",
+    "directories": { "output": "dist", "buildResources": "build" },
+    "files": ["main.cjs", "package.json"],
+    "extraResources": [
+      { "from": "../server", "to": "app/server", "filter": ["**/*"] },
+      { "from": "../public", "to": "app/public", "filter": ["**/*"] },
+      { "from": "../package.json", "to": "app/package.json" }
+    ],
+    "win": { "target": [{ "target": "nsis", "arch": ["x64"] }, { "target": "portable", "arch": ["x64"] }], "icon": "build/icon.ico" },
+    "nsis": { "oneClick": false, "perMachine": false, "allowToChangeInstallationDirectory": true, "shortcutName": "Hadir", "artifactName": "Hadir-Setup-${version}.${ext}" },
+    "portable": { "artifactName": "Hadir-Portable-${version}.${ext}" },
+    "mac": { "target": "dmg", "icon": "build/icon.icns", "category": "public.app-category.education" },
+    "linux": { "target": ["AppImage"], "icon": "build/icon.png", "category": "Education", "artifactName": "Hadir-${version}.${ext}" }
+  }
+}

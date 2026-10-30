@@ -3,6 +3,8 @@ import { h, icon, theme, field } from '../ui.js';
 import { t, addStrings, lang, setLang } from '../i18n.js';
 import { api } from '../api.js';
 import { makeKey, saveDevice, deviceLabel } from '../device.js';
+import { titleLabel, setAccent } from '../educator.js';
+import '../strings-accounts.js';
 
 addStrings({
   en: {
@@ -27,11 +29,14 @@ export default async function mountJoin(root, token, app) {
   let info;
   try { info = await api.get(`/api/join/${encodeURIComponent(token)}`); }
   catch (e) { card.append(h('div.stack', h('h1', t('jn.bad')), h('p.muted', t('jn.badText')))); return; }
+  setAccent(info.group.accent);
   if (!info.open) { card.append(h('div.stack', h('h1', t('jn.closed')), h('p.muted', t('jn.closedText')), h('a.btn.btn--ghost', { href: '/app/' }, t('jn.openApp')))); return; }
 
   const input = (name, type, extra = {}) => h('input.input', { name, type, required: true, ...extra });
   const form = h('form.stack',
-    h('div', h('h1', t('jn.title', { group: info.group.course_name || info.group.name })), h('p.muted', [info.group.name, t('jn.by', { teacher: info.group.teacher_name })].join(' · '))),
+    h('div', h('h1', t('jn.title', { group: info.group.course_name || info.group.name })), h('p.muted', [info.group.name, t('jn.by', { teacher: [titleLabel(info.group.teacher_title), info.group.teacher_name].filter(Boolean).join(' ') })].join(' · ')),
+      info.group.institution ? h('p.muted.small', [info.group.department, info.group.institution].filter(Boolean).join(' · ')) : null),
+    info.group.intro ? h('p.welcomenote', info.group.intro) : null,
     h('p', t('jn.text')),
     field(t('jn.name'), input('full_name', 'text', { autocomplete: 'name', maxlength: 80 }), t('jn.nameHint')),
     field(t('jn.id'), input('university_id', 'text', { required: false, autocomplete: 'username', dir: 'ltr', maxlength: 40 }), t('jn.idHint')),

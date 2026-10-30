@@ -1,6 +1,7 @@
 // Shared building blocks for the screens: page headers, sheets, stat tiles, tabs, pickers.
 import { h, icon, chip } from './ui.js';
 import { t, fmtPct } from './i18n.js';
+import { auth } from './api.js';
 
 export const pageHead = (title, sub, ...actions) =>
   h('header.pagehead', h('div.pagehead__text', h('h1', title), sub ? h('p.muted', sub) : null), actions.flat().filter(Boolean).length ? h('div.pagehead__actions', actions) : null);
@@ -85,8 +86,13 @@ export function parseRoster(text) {
 export const SUBJECTS = ['Linguistics', 'Phonetics and Phonology', 'Writing Production', 'Written Expression', 'Oral Expression', 'Grammar', 'Morphology and Syntax', 'Semantics and Pragmatics',
   'Sociolinguistics', 'Psycholinguistics', 'Applied Linguistics', 'Discourse Analysis', 'Reading Comprehension', 'Listening Comprehension', 'British Literature', 'American Literature',
   'Literary Studies', 'British Civilisation', 'American Civilisation', 'Cultural Studies', 'Translation', 'Research Methodology', 'ESP (English for Specific Purposes)', 'Didactics of English (TEFL)', 'Educational Psychology', 'Study Skills'];
+// The educator's own subjects come first, then the department's usual list.
 export function subjectList() {
+  const own = auth.user?.profile?.subjects || [];
+  const all = [...own, ...SUBJECTS.filter((x) => !own.includes(x))];
+  const sig = all.join('|');
   let dl = document.getElementById('hd-subjects');
-  if (!dl) { dl = document.createElement('datalist'); dl.id = 'hd-subjects'; for (const x of SUBJECTS) { const o = document.createElement('option'); o.value = x; dl.append(o); } document.body.append(dl); }
+  if (dl && dl.dataset.sig !== sig) { dl.remove(); dl = null; }
+  if (!dl) { dl = document.createElement('datalist'); dl.id = 'hd-subjects'; dl.dataset.sig = sig; for (const x of all) { const o = document.createElement('option'); o.value = x; dl.append(o); } document.body.append(dl); }
   return 'hd-subjects';
 }

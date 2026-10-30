@@ -1,5 +1,6 @@
 // Today: what is on, what is running, what needs you, and whether this phone is ready for a room with no Wi-Fi.
 import { h, icon, toast, openModal, empty, errorState, chip, field } from '../ui.js';
+import { shortName } from '../educator.js';
 import { t, addStrings, fmtDateLong, fmtDate, fmtTime, fmtPct, fmtDateTime } from '../i18n.js';
 import { api } from '../api.js';
 import { pageHead, sheet, stat, select } from '../kit.js';
@@ -42,7 +43,7 @@ const QUOTES = [['The limits of my language mean the limits of my world.', 'Ludw
   ['Words are, of course, the most powerful drug used by mankind.', 'Rudyard Kipling'], ['A word after a word after a word is power.', 'Margaret Atwood'], ['We read to know we are not alone.', 'William Nicholson'],
   ['What is food to one is bitter poison to another.', 'Lucretius'], ['Tell me and I forget. Teach me and I remember. Involve me and I learn.', 'Benjamin Franklin (attributed)']];
 const quoteOfDay = () => QUOTES[Math.floor(Date.now() / 864e5) % QUOTES.length];
-const greeting = (name) => { const hr = new Date().getHours(); return t(hr < 12 ? 'today.morning' : hr < 18 ? 'today.afternoon' : 'today.evening', { name: name.split(/\s+/).slice(0, 2).join(' ') }); };
+const greeting = (name) => { const hr = new Date().getHours(); return t(hr < 12 ? 'today.morning' : hr < 18 ? 'today.afternoon' : 'today.evening', { name }); };
 
 // With no connection, build the same picture from what the phone saved.
 function fromBundle(bundle, locals) {
@@ -125,7 +126,7 @@ export default async function mount(root, params, app) {
   const upcoming = sheet(t('today.upcoming'), dash.upcoming.length ? h('ul.ledger-list', dash.upcoming.map((a) => h('li', h('div.grow', h('strong', a.title), h('p.muted.small', a.group_name)), h('span.muted.small', t('today.due', { date: fmtDate(a.due_at) }))))) : empty(t('today.noUpcoming')), null, { flush: true });
 
   root.append(
-    h('section.hero-band', h('div.hero-band__text', h('p.hero-band__date', fmtDateLong(Date.now())), h('h1', greeting(app.user.full_name)), h('blockquote.hero-band__quote', quoteOfDay()[0], h('cite', quoteOfDay()[1]))),
+    h('section.hero-band', h('div.hero-band__text', h('p.hero-band__date', fmtDateLong(Date.now())), h('h1', greeting(shortName(app.user))), h('blockquote.hero-band__quote', quoteOfDay()[0], h('cite', quoteOfDay()[1]))),
       h('button.btn.btn--primary.btn--lg', { type: 'button', onclick: () => startFlow() }, icon('scan', 18), t('today.newRoll'))),
     h('div.stack.stack--lg',
       dash.offline ? h('div.callout.callout--warn', icon('wifioff', 18), t('today.offlineView')) : null,

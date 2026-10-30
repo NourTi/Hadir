@@ -181,6 +181,34 @@ CREATE TABLE IF NOT EXISTS audit_log (
   at INTEGER NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS educators (
+  user_id TEXT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+  title TEXT NOT NULL DEFAULT '',
+  institution TEXT NOT NULL DEFAULT '',
+  faculty TEXT NOT NULL DEFAULT '',
+  department TEXT NOT NULL DEFAULT '',
+  degree TEXT NOT NULL DEFAULT '',
+  specialization TEXT NOT NULL DEFAULT '',
+  office TEXT NOT NULL DEFAULT '',
+  phone TEXT NOT NULL DEFAULT '',
+  public_email TEXT NOT NULL DEFAULT '',
+  subjects TEXT NOT NULL DEFAULT '[]',
+  accent TEXT NOT NULL DEFAULT 'green',
+  intro TEXT NOT NULL DEFAULT '',
+  defaults TEXT NOT NULL DEFAULT '{}',
+  updated_at INTEGER NOT NULL DEFAULT 0
+);
+
+CREATE TABLE IF NOT EXISTS password_resets (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  code_hash TEXT NOT NULL,
+  issued_by TEXT,
+  expires_at INTEGER NOT NULL,
+  used_at INTEGER,
+  created_at INTEGER NOT NULL
+);
+
 CREATE TABLE IF NOT EXISTS kv (key TEXT PRIMARY KEY, value TEXT);
 CREATE TABLE IF NOT EXISTS demo_keys (student_id TEXT PRIMARY KEY, device_id TEXT NOT NULL, private_jwk TEXT NOT NULL);
 `;
@@ -191,6 +219,9 @@ export function openDb(file) {
   raw.exec('PRAGMA journal_mode = WAL; PRAGMA foreign_keys = ON; PRAGMA busy_timeout = 5000;');
   raw.exec(SCHEMA);
   for (const col of ['join_token TEXT', 'join_open INTEGER NOT NULL DEFAULT 1']) { try { raw.exec(`ALTER TABLE groups ADD COLUMN ${col}`); } catch { /* already there */ } }
+  for (const col of ['token_ver INTEGER NOT NULL DEFAULT 0', 'is_owner INTEGER NOT NULL DEFAULT 0', 'recovery_hash TEXT', 'failed_logins INTEGER NOT NULL DEFAULT 0', 'locked_until INTEGER NOT NULL DEFAULT 0', 'last_login INTEGER']) { try { raw.exec(`ALTER TABLE users ADD COLUMN ${col}`); } catch { /* already there */ } }
+  // An install made before accounts existed: its first teacher is the owner.
+  raw.exec("UPDATE users SET is_owner = 1 WHERE id = (SELECT id FROM users WHERE role IN ('teacher','admin') ORDER BY created_at LIMIT 1) AND NOT EXISTS (SELECT 1 FROM users WHERE is_owner = 1)");
   const cache = new Map();
   const st = (sql) => {
     let s = cache.get(sql);

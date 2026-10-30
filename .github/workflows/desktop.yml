@@ -1,0 +1,60 @@
+name: Build the Hadir desktop app
+
+on:
+  push:
+    branches: [desktop]
+    tags: ['v*']
+  workflow_dispatch:
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Tests
+        run: npm test
+      - name: Bundle the fonts (so the app never calls another site)
+        run: |
+          npm install --no-save --no-package-lock @fontsource-variable/newsreader @fontsource-variable/public-sans @fontsource/ibm-plex-sans-arabic
+          node scripts/fetch-fonts.mjs
+      - name: Build the installer
+        working-directory: desktop
+        run: |
+          npm install --no-package-lock
+          npm run dist
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Hadir-Windows
+          path: |
+            desktop/dist/Hadir-Setup-*.exe
+            desktop/dist/Hadir-Portable-*.exe
+          if-no-files-found: error
+
+  linux-mac:
+    if: github.event_name == 'workflow_dispatch'
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: |
+          npm install --no-save --no-package-lock @fontsource-variable/newsreader @fontsource-variable/public-sans @fontsource/ibm-plex-sans-arabic
+          node scripts/fetch-fonts.mjs
+      - working-directory: desktop
+        run: |
+          npm install --no-package-lock
+          npm run dist
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Hadir-${{ matrix.os }}
+          path: |
+            desktop/dist/*.AppImage
+            desktop/dist/*.dmg
+          if-no-files-found: error

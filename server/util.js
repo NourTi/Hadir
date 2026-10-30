@@ -75,3 +75,31 @@ export const jparse = (s, fallback) => { try { return s ? JSON.parse(s) : fallba
 export const clamp = (n, lo, hi) => Math.min(hi, Math.max(lo, n));
 export const num = (v, d = 0) => (Number.isFinite(Number(v)) ? Number(v) : d);
 export const str = (v, max = 200) => String(v ?? '').trim().slice(0, max);
+
+// ---- accounts ----
+const REC_ALPHA = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+// A recovery code: 16 characters in four groups (about 79 bits). It is shown once and only its hash is stored.
+export function recoveryCode() {
+  const bytes = crypto.randomBytes(16);
+  let s = '';
+  for (let i = 0; i < 16; i++) s += REC_ALPHA[bytes[i] % REC_ALPHA.length];
+  return s.match(/.{4}/g).join('-');
+}
+export const normalizeRecovery = (c) => String(c || '').toUpperCase().replace(/[^A-Z0-9]/g, '').replace(/(.{4})(?=.)/g, '$1-');
+const COMMON = new Set(['password', 'password1', '12345678', '123456789', '1234567890', 'qwertyuiop', 'azertyuiop', 'iloveyou1', 'motdepasse', 'admin1234', 'azerty123', 'qwerty123', 'abcd1234', 'hadir1234', 'teacher123', '00000000', '11111111', 'aaaaaaaa', 'letmein123']);
+// Returns a short message if the password is too weak, otherwise null.
+export function weakPassword(pw, { email = '', name = '', min = 10 } = {}) {
+  const p = String(pw || '');
+  if (p.length < min) return `Use a password with at least ${min} characters.`;
+  if (p.length > 200) return 'That password is too long.';
+  const low = p.toLowerCase();
+  if (COMMON.has(low) || /^(.)\1+$/.test(p)) return 'That password is too easy to guess. Choose another.';
+  const local = String(email).split('@')[0].toLowerCase();
+  if (local.length >= 4 && low.includes(local)) return 'Do not put your email in your password.';
+  const first = String(name).toLowerCase().split(/\s+/).filter((w) => w.length >= 4);
+  if (first.some((w) => low.includes(w))) return 'Do not put your name in your password.';
+  if (!/[^A-Za-z]/.test(p) && new Set(low).size < 5) return 'Mix letters, numbers or symbols so the password is harder to guess.';
+  return null;
+}
+// A hash to compare against when the account does not exist, so a wrong email takes as long as a wrong password.
+export const DUMMY_HASH = hashPassword('hadir-dummy-password');

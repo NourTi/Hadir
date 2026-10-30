@@ -1,12 +1,14 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { uid, shortId, inviteCode, normalizeCode, hashPassword, verifyPassword, signToken, verifyToken, sanitizeJwk, jparse, clamp, num, str } from './util.js';
+import { uid, shortId, inviteCode, normalizeCode, hashPassword, verifyPassword, signToken, verifyToken, sanitizeJwk, jparse, clamp, num, str, weakPassword, DUMMY_HASH } from './util.js';
 import { HttpError, bad, unauthorized, forbidden, notFound, conflict } from './http.js';
 import { insertRule, defaultRules } from './engine.js';
 import { applyScan, applyMark, finalizeSession, sessionAttendance, STATUSES } from './attendance.js';
 import { groupStats, flagFor } from './stats.js';
 
 const TOKEN_TTL = 30 * 24 * 3600;
+const TEACHER_TTL = 7 * 24 * 3600;
+const LOCK_AFTER = 8, LOCK_MS = 10 * 60e3;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const EXCUSE_TYPES = { pdf: 'application/pdf', png: 'image/png', jpg: 'image/jpeg', webp: 'image/webp' };
 
@@ -18,33 +20,36 @@ export function registerCore(app, ctx) {
   function limit(key, max = 10, windowMs = 10 * 60e3) {
     const now = Date.now();
     const h = hits.get(key);
+    if (hits.size > 5000) for (const [k, v] of hits) if (v.reset < now) hits.delete(k);
     if (!h || h.reset < now) { hits.set(key, { n: 1, reset: now + windowMs }); return; }
     if (++h.n > max) throw new HttpError(429, 'too_many_attempts', 'Too many attempts. Wait a few minutes and try again.');
   }
   const publicUser = (u) => {
     const out = { id: u.id, role: u.role, full_name: u.full_name, login: u.login, language: u.language, telegram_chat_id: u.telegram_chat_id };
+    if (u.role !== 'student') { out.is_owner = !!u.is_owner; out.profile = profileOf(u.id); }
     if (u.role === 'student') {
       const s = db.get('SELECT id, university_id FROM students WHERE user_id = ?', u.id);
       if (s) { out.student_id = s.id; out.university_id = s.university_id; }
     }
     return out;
   };
-  const session = (u, extra = {}) => ({ token: signToken({ sub: u.id, role: u.role }, cfg.secret, TOKEN_TTL), user: publicUser(u), ...extra });
+  const session = (u, extra = {}) => ({ token: signToken({ sub: u.id, role: u.role, v: u.token_ver || 0 }, cfg.secret, u.role === 'student' ? TOKEN_TTL : TEACHER_TTL), user: publicUser(u), ...extra });
 
   const auth = (...roles) => (req) => {
     const h = req.headers.authorization || '';
     const p = verifyToken(h.startsWith('Bearer ') ? h.slice(7) : '', cfg.secret);
     if (!p) throw unauthorized();
     const user = db.get('SELECT * FROM users WHERE id = ? AND active = 1', p.sub);
-    if (!user) throw unauthorized();
+    if (!user || (p.v || 0) !== (user.token_ver || 0)) throw unauthorized();
     if (roles.length && !roles.includes(user.role)) throw forbidden();
     req.user = user;
     if (user.role === 'student') req.student = db.get('SELECT * FROM students WHERE user_id = ?', user.id);
   };
   const teacher = auth('teacher', 'admin');
+  const owner = (req) => { teacher(req); if (!req.user.is_owner) throw forbidden('owner_only', 'Only the owner of this installation can do this.'); };
   const student = auth('student');
   const anyone = auth();
-  ctx.auth = { teacher, student, anyone };
+  ctx.auth = { teacher, student, anyone, owner };
 
   const ownedGroup = (teacherId, groupId) => {
     const g = db.get('SELECT * FROM groups WHERE id = ? AND teacher_id = ?', groupId, teacherId);
@@ -60,39 +65,42 @@ export function registerCore(app, ctx) {
     !!db.get('SELECT 1 AS x FROM enrollments e JOIN groups g ON g.id = e.group_id WHERE g.teacher_id = ? AND e.student_id = ?', teacherId, studentId);
   ctx.helpers = { ownedGroup, ownedSession, ownsStudent, publicUser, session, limit, UUID };
 
+  const profileOf = (id) => {
+    const r = db.get('SELECT * FROM educators WHERE user_id = ?', id);
+    return r ? { title: r.title, institution: r.institution, faculty: r.faculty, department: r.department, degree: r.degree, specialization: r.specialization, office: r.office, phone: r.phone,
+      public_email: r.public_email, subjects: jparse(r.subjects, []), accent: r.accent, intro: r.intro, defaults: jparse(r.defaults, {}) } : null;
+  };
+  ctx.helpers.profileOf = profileOf;
   const groupOut = (g) => ({ ...g, schedule: jparse(g.schedule, []), archived: !!g.archived });
 
   // ---------- config / time ----------
   app.get('/api/config', () => ({
     demo: cfg.demo, setup_needed: !db.get("SELECT 1 AS x FROM users WHERE role = 'teacher'"),
+    registration_open: db.kvGet('registration_open') !== '0', desktop: !!cfg.desktop, public_url: db.kvGet('public_url') || process.env.HADIR_PUBLIC_URL || '',
     telegram: !!cfg.telegramToken, webhook: !!cfg.webhookUrl, version: '1.0.0',
   }));
   app.get('/api/time', () => ({ now: Date.now() }));
 
   // ---------- auth ----------
-  app.post('/api/auth/setup', (req) => {
-    if (db.get("SELECT 1 AS x FROM users WHERE role = 'teacher'")) throw conflict('already_setup', 'This server already has a teacher account. Sign in instead.');
-    const email = str(req.body.email, 120).toLowerCase();
-    const name = str(req.body.full_name, 80);
-    const password = String(req.body.password || '');
-    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) throw bad('bad_email', 'Enter a valid email address.');
-    if (!name) throw bad('name_required', 'Enter your name.');
-    if (password.length < 8) throw bad('weak_password', 'Use a password with at least 8 characters.');
-    const id = uid();
-    db.tx(() => {
-      db.run('INSERT INTO users (id, role, login, password_hash, full_name, language, created_at) VALUES (?,?,?,?,?,?,?)', id, 'teacher', email, hashPassword(password), name, req.body.language === 'ar' ? 'ar' : 'en', Date.now());
-      for (const r of defaultRules()) insertRule(db, id, r);
-      db.audit(id, 'account.create', 'user', id, null, { role: 'teacher' });
-    });
-    return session(db.get('SELECT * FROM users WHERE id = ?', id));
-  });
-
   app.post('/api/auth/login', (req) => {
     const login = str(req.body.login, 120).toLowerCase();
-    limit(`login:${req.ip}:${login}`, 10);
+    limit(`login:${req.ip}`, 30);
+    limit(`login:${login}`, 20, 15 * 60e3);
     const u = db.get('SELECT * FROM users WHERE login = ? AND active = 1', login);
-    if (!u || !verifyPassword(req.body.password, u.password_hash)) throw unauthorized('bad_credentials', 'The ID or password is not right.');
-    return session(u);
+    const now = Date.now();
+    if (u && u.locked_until > now) { verifyPassword(req.body.password, DUMMY_HASH); throw new HttpError(429, 'account_locked', `Too many wrong passwords. This account is locked for ${Math.ceil((u.locked_until - now) / 60e3)} more minutes.`); }
+    const ok = verifyPassword(req.body.password, u ? u.password_hash : DUMMY_HASH);
+    if (!u || !ok) {
+      if (u) {
+        const n = u.failed_logins + 1;
+        db.run('UPDATE users SET failed_logins = ?, locked_until = ? WHERE id = ?', n >= LOCK_AFTER ? 0 : n, n >= LOCK_AFTER ? now + LOCK_MS : 0, u.id);
+        if (n >= LOCK_AFTER) db.audit(u.id, 'login.locked', 'user', u.id);
+      }
+      throw unauthorized('bad_credentials', 'The ID or password is not right.');
+    }
+    db.run('UPDATE users SET failed_logins = 0, locked_until = 0, last_login = ? WHERE id = ?', now, u.id);
+    if (u.role !== 'student') db.audit(u.id, 'login', 'user', u.id);
+    return session(db.get('SELECT * FROM users WHERE id = ?', u.id));
   });
 
   app.post('/api/auth/activate', (req) => {
@@ -133,7 +141,8 @@ export function registerCore(app, ctx) {
   app.get('/api/join/:token', (req) => {
     limit(`joininfo:${req.ip}`, 60);
     const g = joinGroup(req.params.token);
-    return { group: { name: g.name, course_name: g.course_name, teacher_name: g.teacher_name }, open: !!g.join_open };
+    const pr = profileOf(g.teacher_id) || {};
+    return { group: { name: g.name, course_name: g.course_name, teacher_name: g.teacher_name, teacher_title: pr.title || '', institution: pr.institution || '', department: pr.department || '', intro: pr.intro || '', accent: pr.accent || 'green' }, open: !!g.join_open };
   });
   app.post('/api/join/:token', (req) => {
     limit(`join:${req.ip}`, 12);
@@ -196,19 +205,25 @@ export function registerCore(app, ctx) {
   app.patch('/api/me', anyone, (req) => {
     const b = req.body;
     if (b.language === 'en' || b.language === 'ar') db.run('UPDATE users SET language = ? WHERE id = ?', b.language, req.user.id);
-    if (b.full_name && req.user.role === 'teacher') db.run('UPDATE users SET full_name = ? WHERE id = ?', str(b.full_name, 80), req.user.id);
+    if (b.full_name && req.user.role !== 'student') db.run('UPDATE users SET full_name = ? WHERE id = ?', str(b.full_name, 80), req.user.id);
     if (b.telegram_chat_id !== undefined) {
       const v = str(b.telegram_chat_id, 40) || null;
       db.run('UPDATE users SET telegram_chat_id = ? WHERE id = ?', v, req.user.id);
       if (req.student) db.run('UPDATE students SET telegram_chat_id = ? WHERE id = ?', v, req.student.id);
     }
+    let fresh = false;
     if (b.new_password) {
+      limit(`pw:${req.user.id}`, 8, 15 * 60e3);
       if (!verifyPassword(b.current_password, req.user.password_hash)) throw bad('wrong_password', 'The current password is not right.');
-      if (String(b.new_password).length < 8) throw bad('weak_password', 'Use a password with at least 8 characters.');
-      db.run('UPDATE users SET password_hash = ? WHERE id = ?', hashPassword(b.new_password), req.user.id);
+      const weak = req.user.role === 'student' ? (String(b.new_password).length < 8 ? 'Use a password with at least 8 characters.' : null) : weakPassword(b.new_password, { email: req.user.login, name: req.user.full_name });
+      if (weak) throw bad('weak_password', weak);
+      // Changing the password signs out every other device by bumping the token version.
+      db.run('UPDATE users SET password_hash = ?, token_ver = token_ver + 1 WHERE id = ?', hashPassword(b.new_password), req.user.id);
       db.audit(req.user.id, 'account.password', 'user', req.user.id);
+      fresh = true;
     }
-    return { user: publicUser(db.get('SELECT * FROM users WHERE id = ?', req.user.id)) };
+    const user = db.get('SELECT * FROM users WHERE id = ?', req.user.id);
+    return fresh ? { ...session(user) } : { user: publicUser(user) };
   });
 
   // ---------- devices ----------
@@ -275,7 +290,7 @@ export function registerCore(app, ctx) {
     };
   });
   app.post('/api/groups', teacher, (req) => {
-    const f = groupFields(req.body);
+    const f = groupFields({ ...(profileOf(req.user.id)?.defaults || {}), ...req.body });
     if (!f.name) throw bad('name_required', 'Give the group a name.');
     const id = uid();
     db.run(`INSERT INTO groups (id, teacher_id, name, course_name, code, semester, year, schedule, late_after_min, close_after_min, absence_warn, absence_notice, created_at)
@@ -336,7 +351,8 @@ export function registerCore(app, ctx) {
           out.created++; out.invites.push({ university_id: univ, full_name: name, code });
         } else {
           out.existing++;
-          if (!s.user_id && s.invite_code) out.invites.push({ university_id: univ, full_name: s.full_name, code: s.invite_code });
+          // Only show an invite code for a student who is already on this teacher's own lists. Another educator's student never leaks a code.
+          if (!s.user_id && s.invite_code && ownsStudent(req.user.id, s.id)) out.invites.push({ university_id: univ, full_name: s.full_name, code: s.invite_code });
         }
         const res = db.run('INSERT OR IGNORE INTO enrollments (group_id, student_id, created_at) VALUES (?,?,?)', g.id, s.id, Date.now());
         if (!res.changes) out.already_in_group++;

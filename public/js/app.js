@@ -5,10 +5,12 @@ import { api, auth, saveAuth, clearAuth, onAuthExpired } from './api.js';
 import { net, onNet, startAutoSync, ensureBundle, syncAll } from './offline.js';
 import { fmtDateTime } from './i18n.js';
 import './strings-app.js';
+import './strings-accounts.js';
+import { applyAccent, fullName, institutionLine } from './educator.js';
 
 const root = document.getElementById('root');
 const themeCtl = theme();
-const app = { config: {}, user: null, setTitle, go, refreshBadges, openInbox, signOut, onSignedIn };
+const app = { config: {}, user: null, setTitle, go, refreshBadges, openInbox, signOut, onSignedIn, rebuild };
 let stopView = null, navToken = 0, shell = null, badgeTimer = null;
 
 const TEACHER_NAV = [
@@ -59,7 +61,7 @@ async function boot() {
 }
 
 async function showAuth() {
-  stopView?.(); stopView = null; shell = null; clearInterval(badgeTimer);
+  stopView?.(); stopView = null; shell = null; clearInterval(badgeTimer); applyAccent(null);
   try { app.config = await api.get('/api/config'); } catch { /* keep what we have */ }
   const { default: mountAuth } = await import('./views/auth.js');
   clear(root); root.className = '';
@@ -71,13 +73,14 @@ function onSignedIn(session) {
   location.hash = '#' + home();
   startSignedIn();
 }
+function rebuild() { if (!auth.token) return; app.user = auth.user; applyAccent(auth.user); buildShell(); route(); refreshBadges(); }
 function signOut() {
-  clearAuth(); stopView?.(); stopView = null;
+  clearAuth(); applyAccent(null); stopView?.(); stopView = null;
   location.hash = '';
   showAuth();
 }
 function startSignedIn() {
-  app.user = auth.user;
+  app.user = auth.user; applyAccent(auth.user);
   buildShell();
   if (auth.user.role !== 'student') { startAutoSync(); ensureBundle().catch(() => {}); }
   clearInterval(badgeTimer);
@@ -98,7 +101,7 @@ function buildShell() {
   const darkNow = () => (document.documentElement.dataset.theme ? document.documentElement.dataset.theme === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches);
   const themeBtn = h('button.icon-btn', { type: 'button', 'aria-label': t('common.theme'), onclick: () => { themeCtl.set(darkNow() ? 'light' : 'dark'); themeBtn.replaceChildren(icon(darkNow() ? 'sun' : 'moon', 20)); } }, icon(darkNow() ? 'sun' : 'moon', 20));
   const brand = h('a.brand.brand--app', { href: '#' + home(), 'aria-label': 'Hadir' }, h('span.brand__ar', { lang: 'ar' }, 'حاضر'), h('span.brand__en', 'Hadir'));
-  const who = h('div.who', h('span.avatar', { 'aria-hidden': 'true' }, [...auth.user.full_name][0] || '?'), h('div.who__text', h('strong', auth.user.full_name), h('span.muted.small', t(isStudent ? 'role.student' : 'role.teacher'))));
+  const who = h('div.who', h('span.avatar', { 'aria-hidden': 'true' }, [...auth.user.full_name][0] || '?'), h('div.who__text', h('strong', isStudent ? auth.user.full_name : fullName(auth.user)), h('span.muted.small', isStudent ? t('role.student') : (institutionLine(auth.user.profile) || t('role.teacher')))));
 
   const side = h('aside.side', h('div.side__top', brand), h('nav.nav', { 'aria-label': t('nav.main') }, nav.map(link)),
     h('div.side__foot', isStudent ? null : h('div.side__sync', mkSync()), h('div.row.row--tools', langBtn, themeBtn, mkBell()), who,

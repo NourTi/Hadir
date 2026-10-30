@@ -1,7 +1,9 @@
 // Settings for both roles: language, theme, Telegram, password and phones. Teachers also get approvals, backup, audit log and demo reset.
 import { h, icon, toast, confirmDialog, empty, chip, field, downloadBlob, theme } from '../ui.js';
 import { t, addStrings, setLang, lang, fmtDateTime } from '../i18n.js';
-import { api } from '../api.js';
+import { api, saveAuth, auth } from '../api.js';
+import { profileCard, recoveryCard, exportCard, ownerCard, addressCard } from './settings-educator.js';
+import '../strings-accounts.js';
 import { pageHead, sheet, select, defList } from '../kit.js';
 
 addStrings({
@@ -39,9 +41,9 @@ export default async function mount(root, params, app) {
 
   // Account
   const tg = h('input.input.ltr', { type: 'text', inputmode: 'numeric', value: app.user.telegram_chat_id || '', maxlength: 40 });
-  const nameInput = isTeacher ? h('input.input', { type: 'text', value: app.user.full_name, maxlength: 80 }) : null;
+  const nameInput = null; // teachers edit their name in the portal card
   const cur = h('input.input', { type: 'password', autocomplete: 'current-password' });
-  const nw = h('input.input', { type: 'password', autocomplete: 'new-password', minlength: 8 });
+  const nw = h('input.input', { type: 'password', autocomplete: 'new-password', minlength: isTeacher ? 10 : 8 });
   const pwErr = h('p.form-error', { role: 'alert' });
   const save = async (body, okKey) => { try { const r = await api.patch('/api/me', body); Object.assign(app.user, r.user); toast(t(okKey), 'ok'); return true; } catch (e) { toast(e.message, 'error'); return false; } };
   const account = card(t('set.account'),
@@ -50,8 +52,8 @@ export default async function mount(root, params, app) {
     h('hr.rule'),
     h('div.stack', h('strong', t('set.telegram')), h('p.muted.small', t('set.telegramText')), h('div.row', field(t('set.chatId'), tg), h('button.btn.btn--ghost', { type: 'button', onclick: () => save({ telegram_chat_id: tg.value }, 'set.saved') }, t('common.save')))),
     h('hr.rule'),
-    h('form.stack', { onsubmit: async (e) => { e.preventDefault(); pwErr.textContent = ''; try { await api.patch('/api/me', { current_password: cur.value, new_password: nw.value }); cur.value = nw.value = ''; toast(t('set.changed'), 'ok'); } catch (er) { pwErr.textContent = er.message; } } },
-      h('strong', t('set.password')), field(t('set.current'), cur), field(t('set.new'), nw, t('set.newHint')), pwErr, h('div.row', h('button.btn.btn--primary', { type: 'submit' }, t('set.password')))));
+    h('form.stack', { onsubmit: async (e) => { e.preventDefault(); pwErr.textContent = ''; try { const r = await api.patch('/api/me', { current_password: cur.value, new_password: nw.value }); if (r.token) saveAuth(r.token, r.user); cur.value = nw.value = ''; toast(t('set.changed'), 'ok'); } catch (er) { pwErr.textContent = er.message; } } },
+      h('strong', t('set.password')), field(t('set.current'), cur), field(t('set.new'), nw, t(isTeacher ? 'set.pwHint' : 'set.newHint')), pwErr, h('div.row', h('button.btn.btn--primary', { type: 'submit' }, t('set.password')))));
 
   // Devices
   const devBox = h('div');
@@ -68,16 +70,17 @@ export default async function mount(root, params, app) {
   };
   const devices = card(t('set.devices'), h('p.muted.small', t('set.devicesText')), devBox);
 
-  stack.append(appearance, account, devices);
+  stack.append(...(isTeacher ? [profileCard(app)] : []), appearance, account, ...(isTeacher ? [recoveryCard()] : []), devices);
 
   // Teacher data tools
   if (isTeacher) {
     const auditBox = h('div');
     const { entries } = await api.get('/api/audit?limit=40');
     auditBox.append(entries.length ? h('ul.audit', entries.map((e) => h('li', h('span.audit__what', e.action), h('span.muted.small', ` ${e.actor || ''} · ${fmtDateTime(e.created_at)}`)))) : h('p.muted', t('set.noAudit')));
+    if (app.user.is_owner) stack.append(await ownerCard(app), addressCard(app));
+    stack.append(exportCard());
     stack.append(card(t('set.data'),
-      h('div.row.row--between', h('div', h('strong', t('set.backup')), h('p.muted.small', t('set.backupText'))), h('button.btn.btn--ghost', { type: 'button', onclick: async () => { try { downloadBlob(await api.blob('/api/export/backup'), `hadir-backup-${new Date().toISOString().slice(0, 10)}.db`); } catch (e) { toast(e.message, 'error'); } } }, icon('download', 16), t('set.backup'))),
-      h('hr.rule'), h('strong', t('set.audit')), auditBox,
+      app.user.is_owner ? [h('div.row.row--between', h('div', h('strong', t('set.backup')), h('p.muted.small', t('set.backupText'))), h('button.btn.btn--ghost', { type: 'button', onclick: async () => { try { downloadBlob(await api.blob('/api/export/backup'), `hadir-backup-${new Date().toISOString().slice(0, 10)}.db`); } catch (e) { toast(e.message, 'error'); } } }, icon('download', 16), t('set.backup'))), h('hr.rule')] : null, h('strong', t('set.audit')), auditBox,
       app.config?.demo ? [h('hr.rule'), h('div.row.row--between', h('div', h('strong', t('set.demo')), h('p.muted.small', t('set.demoText'))), h('button.btn.btn--ghost', { type: 'button', onclick: async () => { if (await confirmDialog({ title: t('set.demoReset'), message: t('set.demoConfirm'), confirmLabel: t('set.demoReset'), danger: true })) { await api.post('/api/demo/reset', {}); toast(t('set.demoOk'), 'ok'); app.go('/today'); } } }, icon('flask', 16), t('set.demoReset')))] : null));
   }
   stack.append(h('div.row', h('button.btn.btn--ghost', { type: 'button', onclick: () => app.signOut() }, icon('logout', 16), t('set.signOut'))));

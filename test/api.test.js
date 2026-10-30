@@ -35,7 +35,7 @@ before(async () => {
 });
 after(async () => { await srv.stop(); });
 
-test('first-run setup creates one teacher with default rules, then closes', async () => {
+test('first sign-up creates the owner with default rules; sign-up can be closed', async () => {
   assert.equal((await api('GET', '/api/config')).data.setup_needed, true);
   const bad = await api('POST', '/api/auth/setup', { email: 'x', password: 'short', full_name: 'A' });
   assert.equal(bad.status, 400);
@@ -43,7 +43,9 @@ test('first-run setup creates one teacher with default rules, then closes', asyn
   assert.equal(r.status, 200);
   T = r.data.token;
   assert.equal((await api('GET', '/api/rules', null, T)).data.rules.length, 5);
-  assert.equal((await api('POST', '/api/auth/setup', { email: 'b@b.dz', password: 'correct horse', full_name: 'B' })).status, 409);
+  assert.equal((await api('POST', '/api/settings/registration', { open: false }, T)).status, 200);
+  assert.equal((await api('POST', '/api/auth/register', { email: 'b@b.dz', password: 'correct horse', full_name: 'Bob B' })).status, 403);
+  await api('POST', '/api/settings/registration', { open: true }, T);
   const login = await api('POST', '/api/auth/login', { login: 'teach@uni.dz', password: 'correct horse' });
   assert.equal(login.status, 200);
   assert.equal((await api('POST', '/api/auth/login', { login: 'teach@uni.dz', password: 'nope' })).status, 401);

@@ -2,6 +2,7 @@
 import { h, icon, empty, chip, flagChip, downloadBlob, toCsv } from '../ui.js';
 import { t, addStrings, fmtShort, fmtDateTime, fmtNum } from '../i18n.js';
 import { api } from '../api.js';
+import { fullName, institutionLine } from '../educator.js';
 import { pageHead, sheet, tabs, groupPicker, rateText, printPage, avatar } from '../kit.js';
 
 addStrings({
@@ -44,7 +45,7 @@ export default async function mount(root, params, app) {
           reg.sessions.map((x) => { const m = s.marks[x.id]; return h('td.mcell', h('span', { class: `sdot sdot--${m || 'none'}`, title: m ? t(`status.${m}`) : t('status.none') })); }),
           h('td.num', rateText(s.stats?.rate)), h('td.num', h('span', { class: s.flag === 'risk' ? 'text-absent' : '' }, s.stats?.absences ?? 0))))))), null, { flush: true }),
       h('p.muted.small', t('rp.legend')),
-      h('p.muted.small.print-only', t('rp.generated', { group: reg.group.name, time: fmtDateTime(reg.generated_at), teacher: reg.teacher })));
+      h('p.muted.small.print-only', [institutionLine(app.user.profile), t('rp.generated', { group: reg.group.name, time: fmtDateTime(reg.generated_at), teacher: fullName(app.user) })].filter(Boolean).join(' — ')));
   };
 
   const riskView = () => (!risk.rows.length ? empty(t('rp.none'), t('rp.noneText'))

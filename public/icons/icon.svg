@@ -1,1 +1,18 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" rx="112" fill="#2144C8"/><rect x="108" y="108" width="296" height="296" rx="54" fill="none" stroke="#fff" stroke-width="22"/><path d="M180 262l54 54 100-112" fill="none" stroke="#fff" stroke-width="40" stroke-linecap="round" stroke-linejoin="round"/></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Hadir">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#1B5444"/><stop offset="1" stop-color="#0C2A22"/></linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#g)"/>
+  <rect x="14" y="14" width="484" height="484" rx="100" fill="none" stroke="#8FD7BC" stroke-opacity=".18" stroke-width="3"/>
+  <!-- scan frame -->
+  <g fill="none" stroke="#8FD7BC" stroke-width="26" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M128 196v-44a24 24 0 0 1 24-24h44"/>
+    <path d="M316 128h44a24 24 0 0 1 24 24v44"/>
+    <path d="M384 316v44a24 24 0 0 1-24 24h-44"/>
+    <path d="M196 384h-44a24 24 0 0 1-24-24v-44"/>
+  </g>
+  <!-- the tick of a register -->
+  <path d="M184 262l54 54 98-122" fill="none" stroke="#FFFFFF" stroke-width="40" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- the dot of the Arabic letter ha' -->
+  <circle cx="256" cy="432" r="16" fill="#8FD7BC"/>
+</svg>

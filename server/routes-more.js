@@ -234,10 +234,10 @@ export function registerMore(app, ctx) {
 
   // ---------- audit + backup ----------
   app.get('/api/audit', teacher, (req) => ({
-    entries: db.all('SELECT l.*, u.full_name AS actor FROM audit_log l LEFT JOIN users u ON u.id = l.actor_id ORDER BY l.id DESC LIMIT ?', clamp(num(req.query.limit, 80), 1, 300))
+    entries: db.all('SELECT l.*, l.at AS created_at, u.full_name AS actor FROM audit_log l LEFT JOIN users u ON u.id = l.actor_id WHERE l.actor_id = ? ORDER BY l.id DESC LIMIT ?', req.user.id, clamp(num(req.query.limit, 80), 1, 300))
       .map((e) => ({ ...e, before: jparse(e.before_json, null), after: jparse(e.after_json, null), before_json: undefined, after_json: undefined })),
   }));
-  app.get('/api/export/backup', teacher, (req, res) => {
+  app.get('/api/export/backup', ctx.auth.owner, (req, res) => {
     const file = engine.backup('download');
     const buf = fs.readFileSync(file);
     res.writeHead(200, { 'Content-Type': 'application/octet-stream', 'Content-Length': buf.length, 'Content-Disposition': `attachment; filename="hadir-backup-${new Date().toISOString().slice(0, 10)}.db"`, 'Cache-Control': 'no-store' });
