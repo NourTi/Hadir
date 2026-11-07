@@ -209,6 +209,17 @@ CREATE TABLE IF NOT EXISTS password_resets (
   created_at INTEGER NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS messages (
+  id TEXT PRIMARY KEY,
+  teacher_id TEXT NOT NULL REFERENCES users(id),
+  student_id TEXT NOT NULL REFERENCES students(id) ON DELETE CASCADE,
+  sender TEXT NOT NULL CHECK (sender IN ('student','teacher')),
+  body TEXT NOT NULL,
+  created_at INTEGER NOT NULL,
+  read_at INTEGER
+);
+CREATE INDEX IF NOT EXISTS idx_messages_thread ON messages (teacher_id, student_id, created_at);
+
 CREATE TABLE IF NOT EXISTS kv (key TEXT PRIMARY KEY, value TEXT);
 CREATE TABLE IF NOT EXISTS demo_keys (student_id TEXT PRIMARY KEY, device_id TEXT NOT NULL, private_jwk TEXT NOT NULL);
 `;
@@ -220,6 +231,7 @@ export function openDb(file) {
   raw.exec(SCHEMA);
   for (const col of ['join_token TEXT', 'join_open INTEGER NOT NULL DEFAULT 1']) { try { raw.exec(`ALTER TABLE groups ADD COLUMN ${col}`); } catch { /* already there */ } }
   for (const col of ['token_ver INTEGER NOT NULL DEFAULT 0', 'is_owner INTEGER NOT NULL DEFAULT 0', 'recovery_hash TEXT', 'failed_logins INTEGER NOT NULL DEFAULT 0', 'locked_until INTEGER NOT NULL DEFAULT 0', 'last_login INTEGER']) { try { raw.exec(`ALTER TABLE users ADD COLUMN ${col}`); } catch { /* already there */ } }
+  try { raw.exec('ALTER TABLE students ADD COLUMN whatsapp TEXT'); } catch { /* already there */ }
   // An install made before accounts existed: its first teacher is the owner.
   raw.exec("UPDATE users SET is_owner = 1 WHERE id = (SELECT id FROM users WHERE role IN ('teacher','admin') ORDER BY created_at LIMIT 1) AND NOT EXISTS (SELECT 1 FROM users WHERE is_owner = 1)");
   const cache = new Map();

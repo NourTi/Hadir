@@ -37,7 +37,11 @@ export default async function mount(root, params, app) {
   const card = h('div.codecard', h('div.codecard__who', h('div.codecard__name', user.full_name), h('div.codecard__sub.ltr', user.university_id)), qrBox, h('div.codecard__timer', bar),
     h('div.codecard__fine', h('span', t('me.fine')), secs), h('div.codecard__fine', h('span', [icon('wifioff', 14), ' ', t('me.offlineOk')])));
   const classes = h('div.stack');
-  root.append(h('div.me', h('div.me__intro', h('h1', t('me.hello', { name: user.full_name.split(' ')[0] })), h('p.muted', t('me.show'))), status, card, classes));
+  const remind = h('div');
+  root.append(h('div.me', h('div.me__intro', h('h1', t('me.hello', { name: user.full_name.split(' ')[0] })), h('p.muted', t('me.show'))), remind, status, card, classes));
+  api.get('/api/me/contact').then(({ contact: c }) => {
+    if (!c.email && !c.phone && !c.whatsapp) remind.replaceWith(h('div.notice', h('span', t('contact.remind')), h('a.btn.btn--ghost.btn--sm', { href: '#/me/settings' }, t('contact.remindBtn'))));
+  }).catch(() => {});
 
   let stamp = 0, code = '';
   const render = async () => {

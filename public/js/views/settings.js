@@ -2,7 +2,7 @@
 import { h, icon, toast, confirmDialog, empty, chip, field, downloadBlob, theme } from '../ui.js';
 import { t, addStrings, setLang, lang, fmtDateTime } from '../i18n.js';
 import { api, saveAuth, auth } from '../api.js';
-import { profileCard, recoveryCard, exportCard, ownerCard, addressCard } from './settings-educator.js';
+import { profileCard, recoveryCard, exportCard, ownerCard, addressCard, contactCard } from './settings-educator.js';
 import '../strings-accounts.js';
 import { pageHead, sheet, select, defList } from '../kit.js';
 
@@ -70,7 +70,7 @@ export default async function mount(root, params, app) {
   };
   const devices = card(t('set.devices'), h('p.muted.small', t('set.devicesText')), devBox);
 
-  stack.append(...(isTeacher ? [profileCard(app)] : []), appearance, account, ...(isTeacher ? [recoveryCard()] : []), devices);
+  stack.append(...(isTeacher ? [profileCard(app)] : [await contactCard()]), appearance, account, ...(isTeacher ? [recoveryCard()] : []), devices);
 
   // Teacher data tools
   if (isTeacher) {

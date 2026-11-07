@@ -322,7 +322,7 @@ export function registerCore(app, ctx) {
       const devices = db.all("SELECT id, label, status, public_jwk, last_seen FROM devices WHERE student_id = ? AND status != 'revoked'", s.id)
         .map((d) => ({ id: d.id, label: d.label, status: d.status, last_seen: d.last_seen, public_jwk: d.status === 'approved' ? jparse(d.public_jwk, null) : null }));
       return {
-        id: s.id, university_id: s.university_id, full_name: s.full_name, email: s.email, phone: s.phone, telegram_chat_id: s.telegram_chat_id,
+        id: s.id, university_id: s.university_id, full_name: s.full_name, email: s.email, phone: s.phone, whatsapp: s.whatsapp, telegram_chat_id: s.telegram_chat_id,
         activated: !!s.user_id, invite_code: s.invite_code, devices, stats: st, flag: flagFor(st, g),
       };
     });

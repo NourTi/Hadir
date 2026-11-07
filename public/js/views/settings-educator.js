@@ -102,3 +102,21 @@ export function addressCard(app) {
       try { const r = await api.post('/api/settings/public-url', { url: input.value }); app.config.public_url = r.public_url; toast(t('own.done'), 'ok'); } catch (e) { err.textContent = e.message; }
     } }, t('common.save')))));
 }
+
+// The student's own contact details. Every field is optional.
+export async function contactCard() {
+  const box = h('div.stack');
+  let c = {};
+  try { c = (await api.get('/api/me/contact')).contact; } catch { /* offline: show an empty form */ }
+  const email = h('input.input', { type: 'email', autocomplete: 'email', value: c.email || '', dir: 'ltr' });
+  const phone = h('input.input', { type: 'tel', autocomplete: 'tel', value: c.phone || '', dir: 'ltr', placeholder: '+213 555 12 34 56' });
+  const wa = h('input.input', { type: 'tel', value: c.whatsapp || '', dir: 'ltr', placeholder: '+213 555 12 34 56' });
+  const err = h('p.form-error', { role: 'alert' });
+  const f = h('form.stack', { onsubmit: async (e) => {
+    e.preventDefault(); err.textContent = '';
+    try { await api.put('/api/me/contact', { email: email.value, phone: phone.value, whatsapp: wa.value }); toast(t('contact.saved'), 'ok'); } catch (er) { err.textContent = er.message; }
+  } }, h('p.muted.small', t('contact.text')), field(t('contact.email'), email), field(t('contact.phone'), phone), field(t('contact.whatsapp'), wa), h('p.muted.small', t('contact.telegram')), err,
+  h('p.muted.small', t('contact.consent')), h('div.row', h('button.btn.btn--primary', { type: 'submit' }, t('common.save'))));
+  box.append(f);
+  return sheet(t('contact.title'), box);
+}

@@ -9,6 +9,7 @@ import { createEngine } from './engine.js';
 import { registerCore } from './routes-core.js';
 import { registerMore } from './routes-more.js';
 import { registerAccounts } from './routes-accounts.js';
+import { registerChat } from './routes-chat.js';
 import { seedDemo } from './seed.js';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -33,6 +34,7 @@ export async function createServer(opts = {}) {
   registerCore(app, ctx);
   registerMore(app, ctx);
   registerAccounts(app, ctx);
+  registerChat(app, ctx);
   const savedUrl = db.kvGet('public_url') || process.env.HADIR_PUBLIC_URL || '';
   if (savedUrl) { try { app.allowedHosts.add(new URL(savedUrl).host.toLowerCase()); app.allowedHosts.add(new URL(savedUrl).hostname.toLowerCase()); } catch { /* ignore a bad value */ } }
   if (cfg.demo) await seedDemo(db, engine);

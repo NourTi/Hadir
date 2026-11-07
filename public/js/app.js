@@ -16,10 +16,10 @@ let stopView = null, navToken = 0, shell = null, badgeTimer = null;
 
 const TEACHER_NAV = [
   ['/today', 'today', 'nav.today'], ['/classes', 'classes', 'nav.classes'], ['/grades', 'award', 'nav.grades'], ['/excuses', 'inbox', 'nav.excuses'],
-  ['/automation', 'zap', 'nav.automation'], ['/reports', 'chart', 'nav.reports'], ['/access', 'phone', 'nav.access'], ['/settings', 'sliders', 'nav.settings'],
+  ['/chat', 'send', 'nav.chat'], ['/automation', 'zap', 'nav.automation'], ['/reports', 'chart', 'nav.reports'], ['/access', 'phone', 'nav.access'], ['/settings', 'sliders', 'nav.settings'],
 ];
 const TEACHER_TABS = ['/today', '/classes', '/grades', '/excuses'];
-const STUDENT_NAV = [['/me', 'qr', 'nav.myCode'], ['/me/attendance', 'calendar', 'nav.attendance'], ['/me/grades', 'award', 'nav.grades'], ['/me/excuses', 'file', 'nav.excuses'], ['/me/settings', 'sliders', 'nav.settings']];
+const STUDENT_NAV = [['/me', 'qr', 'nav.myCode'], ['/me/attendance', 'calendar', 'nav.attendance'], ['/me/grades', 'award', 'nav.grades'], ['/me/chat', 'send', 'nav.chat'], ['/me/excuses', 'file', 'nav.excuses'], ['/me/settings', 'sliders', 'nav.settings']];
 
 const R = (pattern, load) => ({ keys: [], re: new RegExp('^' + pattern.replace(/:(\w+)/g, (_, k) => '([^/]+)') + '/?$'), names: [...pattern.matchAll(/:(\w+)/g)].map((m) => m[1]), load });
 const TEACHER_ROUTES = [
@@ -27,14 +27,14 @@ const TEACHER_ROUTES = [
   R('/classes', () => import('./views/classes.js')), R('/classes/:id', () => import('./views/classes.js')),
   R('/session/:id', () => import('./views/session.js')), R('/student/:id', () => import('./views/studentcard.js')),
   R('/grades', () => import('./views/grades.js')), R('/grades/:id', () => import('./views/grades.js')),
-  R('/excuses', () => import('./views/excuses.js')), R('/automation', () => import('./views/automation.js')),
+  R('/excuses', () => import('./views/excuses.js')), R('/chat', () => import('./views/chat.js')), R('/chat/:id', () => import('./views/chat.js')), R('/automation', () => import('./views/automation.js')),
   R('/automation/:tab', () => import('./views/automation.js')),
   R('/reports', () => import('./views/reports.js')), R('/reports/:id', () => import('./views/reports.js')),
   R('/access', () => import('./views/access.js')), R('/access/:id', () => import('./views/access.js')), R('/settings', () => import('./views/settings.js')),
 ];
 const STUDENT_ROUTES = [
   R('/me', () => import('./views/me.js')), R('/me/attendance', () => import('./views/me-attendance.js')), R('/me/grades', () => import('./views/me-grades.js')),
-  R('/me/excuses', () => import('./views/me-excuses.js')), R('/me/settings', () => import('./views/settings.js')),
+  R('/me/excuses', () => import('./views/me-excuses.js')), R('/me/chat', () => import('./views/chat.js')), R('/me/chat/:id', () => import('./views/chat.js')), R('/me/settings', () => import('./views/settings.js')),
 ];
 const home = () => (auth.user?.role === 'student' ? '/me' : '/today');
 const path = () => (location.hash.replace(/^#/, '') || '/').split('?')[0];
@@ -194,11 +194,13 @@ async function refreshBadges() {
   if (!auth.token) return;
   try {
     if (auth.user.role === 'student') {
-      const n = await api.get('/api/notifications');
+      const [n, c] = await Promise.all([api.get('/api/notifications'), api.get('/api/chat/unread')]);
+      setBadge('/me/chat', c.unread);
       document.querySelectorAll('.bell-dot').forEach((d) => { d.hidden = !n.unread; d.textContent = n.unread || ''; });
       return;
     }
-    const [d, n] = await Promise.all([api.get('/api/dashboard'), api.get('/api/notifications')]);
+    const [d, n, c] = await Promise.all([api.get('/api/dashboard'), api.get('/api/notifications'), api.get('/api/chat/unread')]);
+    setBadge('/chat', c.unread);
     setBadge('/excuses', d.counts.pending_excuses);
     setBadge('/automation', d.counts.pending_messages);
     setBadge('/today', d.counts.review_scans + d.counts.pending_devices);
