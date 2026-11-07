@@ -10,6 +10,7 @@ import { applyAccent, fullName, institutionLine } from './educator.js';
 
 const root = document.getElementById('root');
 const themeCtl = theme();
+let renewTimer = null, renewBound = false;
 const app = { config: {}, user: null, setTitle, go, refreshBadges, openInbox, signOut, onSignedIn, rebuild };
 let stopView = null, navToken = 0, shell = null, badgeTimer = null;
 
@@ -56,7 +57,7 @@ async function boot() {
   const joinMatch = /^\/join\/([\w-]+)/.exec(path());
   if (joinMatch) { stopView?.(); const { default: mountJoin } = await import('./views/join.js'); return mountJoin(root, joinMatch[1], app); }
   if (!auth.token) return showAuth();
-  try { const me = await api.get('/api/me'); saveAuth(auth.token, me.user); } catch (e) { if (!e.offline && e.status === 401) return showAuth(); }
+  try { const me = await api.post('/api/auth/refresh'); saveAuth(me.token, me.user); } catch (e) { if (!e.offline && e.status === 401) return showAuth(); }
   startSignedIn();
 }
 
@@ -85,6 +86,10 @@ function startSignedIn() {
   if (auth.user.role !== 'student') { startAutoSync(); ensureBundle().catch(() => {}); }
   clearInterval(badgeTimer);
   badgeTimer = setInterval(() => { if (!document.hidden) refreshBadges(); }, 60e3);
+  clearInterval(renewTimer);
+  const renew = () => { if (auth.token && !document.hidden) api.post('/api/auth/refresh').then((s) => { if (auth.token) saveAuth(s.token, { ...auth.user, ...s.user }); }).catch(() => {}); };
+  renewTimer = setInterval(renew, 20 * 60e3);
+  if (!renewBound) { renewBound = true; document.addEventListener('visibilitychange', renew); }
   refreshBadges();
   route();
 }

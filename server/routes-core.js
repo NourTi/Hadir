@@ -7,7 +7,7 @@ import { applyScan, applyMark, finalizeSession, sessionAttendance, STATUSES } fr
 import { groupStats, flagFor } from './stats.js';
 
 const TOKEN_TTL = 30 * 24 * 3600;
-const TEACHER_TTL = 7 * 24 * 3600;
+const TEACHER_TTL = 30 * 24 * 3600; // renewed on every visit, so an active educator stays signed in
 const LOCK_AFTER = 8, LOCK_MS = 10 * 60e3;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const EXCUSE_TYPES = { pdf: 'application/pdf', png: 'image/png', jpg: 'image/jpeg', webp: 'image/webp' };

@@ -52,7 +52,7 @@ export default function mountAuth(root, app) {
     const show = h('input', { type: 'checkbox', onchange: () => { pw.type = show.checked ? 'text' : 'password'; } });
     const title = h('select.input', { name: 'title' }, TITLES.map((x) => h('option', { value: x }, x ? titleLabel(x) : t('acc.title.none'))));
     let accent = 'green';
-    const sw = h('div.swatches', { role: 'radiogroup', 'aria-label': t('acc.accent') }, ACCENTS.map(([k, hex]) => h('label.swatch', { style: { '--sw': hex }, title: k },
+    const sw = h('div.swatches', { role: 'radiogroup', 'aria-label': t('acc.accent') }, ACCENTS.map(([k, hex, deep, soft, name]) => h('label.swatch', { style: { '--sw': hex, '--sw2': deep, '--sw3': soft }, title: name },
       h('input', { type: 'radio', name: 'accent', value: k, checked: k === 'green', onchange: () => { accent = k; setAccent(k); } }), h('span'))));
     const f = h('form.stack', { novalidate: false },
       h('h1', t(first ? 'acc.createFirst' : 'acc.createTitle')), h('p.muted', t(first ? 'acc.firstText' : 'acc.createText')),

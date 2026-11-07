@@ -3,17 +3,20 @@ import { uid, hashPassword, verifyPassword, jparse, str, clamp, num, recoveryCod
 import { HttpError, bad, forbidden, notFound, conflict } from './http.js';
 import { insertRule, defaultRules } from './engine.js';
 
-export const ACCENTS = ['green', 'ink', 'plum', 'clay', 'teal', 'slate'];
+export const ACCENTS = ['green', 'ink', 'plum', 'clay', 'teal', 'slate', 'ocean', 'royal', 'indigo', 'violet', 'rose', 'crimson', 'ember', 'amber', 'olive', 'forest', 'sage', 'bronze', 'graphite', 'midnight'];
 const TITLES = ['', 'Mr', 'Ms', 'Dr', 'Prof', 'Assoc. Prof', 'Asst. Lecturer'];
 const EMAIL = /^[^@\s]{1,64}@[^@\s]+\.[^@\s]{2,}$/;
 const RESET_TTL = 24 * 3600e3;
 
 export function registerAccounts(app, ctx) {
   const { db, cfg } = ctx;
-  const { teacher, owner } = ctx.auth;
+  const { teacher, owner, anyone } = ctx.auth;
   const { session, limit, profileOf } = ctx.helpers;
   const registrationOpen = () => db.kvGet('registration_open') !== '0';
   const hasTeacher = () => !!db.get("SELECT 1 AS x FROM users WHERE role IN ('teacher','admin')");
+
+  // Sliding session: the app calls this on every start and while it is open, so the sign-in never expires during normal use.
+  app.post('/api/auth/refresh', anyone, (req) => session(req.user));
 
   const cleanProfile = (b = {}, base = {}) => {
     const subjects = (Array.isArray(b.subjects) ? b.subjects : typeof b.subjects === 'string' ? b.subjects.split(/[,;\n،]/) : base.subjects || [])

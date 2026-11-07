@@ -14,7 +14,7 @@ export function profileCard(app) {
   const d = p.defaults || {};
   const title = h('select.input', { name: 'title' }, TITLES.map((x) => h('option', { value: x, selected: x === (p.title || '') }, x ? titleLabel(x) : t('acc.title.none'))));
   let accent = p.accent || 'green';
-  const sw = h('div.swatches', { role: 'radiogroup', 'aria-label': t('acc.accent') }, ACCENTS.map(([k, hex]) => h('label.swatch', { style: { '--sw': hex }, title: k },
+  const sw = h('div.swatches', { role: 'radiogroup', 'aria-label': t('acc.accent') }, ACCENTS.map(([k, hex, deep, soft, name]) => h('label.swatch', { style: { '--sw': hex, '--sw2': deep, '--sw3': soft }, title: name },
     h('input', { type: 'radio', name: 'accent', value: k, checked: k === accent, onchange: () => { accent = k; setAccent(k); } }), h('span'))));
   const num = (name, v, min, max) => h('input.input', { name, type: 'number', value: v ?? '', min, max, inputmode: 'numeric' });
   const intro = h('textarea.input', { name: 'intro', rows: 3, maxlength: 400 }, p.intro || '');
