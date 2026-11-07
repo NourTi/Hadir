@@ -238,6 +238,5 @@ Bump `version` in `desktop/package.json` and push to the `desktop` branch (or pu
 
 ## Credits
 
-Designed and built by **Nour Mohammed Abdessamed**, with views from Dr. Abdelhak Gandouzi.
+Designed and built by **Nour Mohammed Abdessamed**
 
-Copyright © 2026 Nour Mohammed Abdessamed. All rights reserved. Choose and add a licence before publishing the source for reuse.
