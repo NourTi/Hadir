@@ -56,6 +56,7 @@ export default function mountAuth(root, app) {
       h('input', { type: 'radio', name: 'accent', value: k, checked: k === 'green', onchange: () => { accent = k; setAccent(k); } }), h('span'))));
     const f = h('form.stack', { novalidate: false },
       h('h1', t(first ? 'acc.createFirst' : 'acc.createTitle')), h('p.muted', t(first ? 'acc.firstText' : 'acc.createText')),
+      cfg.setup_key_required ? field(t('acc.setupKey'), input('setup_key', 'password', { ac: 'off' }), t('acc.setupKeyHint')) : null,
       h('p.sectionlabel', t('acc.section.account')),
       field(t('acc.name'), input('full_name', 'text', { ac: 'name' })),
       field(t('acc.email'), input('email', 'email', { ac: 'email', dir: 'ltr' })),

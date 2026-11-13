@@ -134,3 +134,21 @@ test('the owner sets the https address students use; others cannot', async () =>
   const viaTunnel = await new Promise((res) => { import('node:http').then(({ default: http }) => { const rq = http.request({ host: '127.0.0.1', port: srv.app.server.address().port, path: '/api/config', headers: { Host: 'hadir-test.ngrok-free.app' } }, (r) => { r.resume(); res(r.statusCode); }); rq.end(); }); });
   assert.equal(viaTunnel, 200, 'the saved address is now an allowed host');
 });
+
+test('a setup key protects an empty server', async () => {
+  process.env.HADIR_SETUP_KEY = 'my-setup-pass';
+  try {
+    const a = await createServer({ dbFile: ':memory:', demo: false, noScheduler: true, secret: 'setup-key-secret' });
+    await a.app.listen(0, '127.0.0.1');
+    const base = `http://127.0.0.1:${a.app.server.address().port}`;
+    const post = async (body) => { const r = await fetch(base + '/api/auth/register', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }); return { status: r.status, data: await r.json().catch(() => ({})) }; };
+    const cfgRes = await (await fetch(base + '/api/config')).json();
+    assert.equal(cfgRes.setup_key_required, true);
+    const acct = { email: 'me@example.org', full_name: 'Test Educator', password: 'Quiet-river-77' };
+    assert.equal((await post(acct)).status, 403, 'no key');
+    assert.equal((await post({ ...acct, setup_key: 'wrong' })).status, 403, 'wrong key');
+    assert.equal((await post({ ...acct, setup_key: 'my-setup-pass' })).status, 200, 'right key');
+    assert.equal((await (await fetch(base + '/api/config')).json()).setup_key_required, false, 'no longer asked once claimed');
+    await a.stop();
+  } finally { delete process.env.HADIR_SETUP_KEY; }
+});

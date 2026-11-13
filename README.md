@@ -189,6 +189,7 @@ Data location: `%APPDATA%\Hadir\data` (Windows), `~/Library/Application Support/
 |---|---|---|
 | `PORT` | `3000` | HTTP port (the desktop app uses `3977`). |
 | `DATA_DIR` | `./data` | Database, uploads and daily backups. |
+| `HADIR_SETUP_KEY` | none | If set, the first account on an empty server needs this password. Set it on any public host. |
 | `HADIR_SECRET` | generated, stored in the database | Signing secret for sessions. |
 | `HADIR_PUBLIC_URL` | empty | https address students use. Can also be set in Settings. |
 | `HADIR_ALLOWED_HOSTS` | empty | Extra host names allowed when strict host checking is on. |

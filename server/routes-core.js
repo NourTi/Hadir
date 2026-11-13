@@ -75,7 +75,7 @@ export function registerCore(app, ctx) {
 
   // ---------- config / time ----------
   app.get('/api/config', () => ({
-    demo: cfg.demo, setup_needed: !db.get("SELECT 1 AS x FROM users WHERE role = 'teacher'"),
+    demo: cfg.demo, setup_needed: !db.get("SELECT 1 AS x FROM users WHERE role = 'teacher'"), setup_key_required: !!process.env.HADIR_SETUP_KEY && !db.get("SELECT 1 AS x FROM users WHERE role = 'teacher'"),
     registration_open: db.kvGet('registration_open') !== '0', desktop: !!cfg.desktop, public_url: db.kvGet('public_url') || process.env.HADIR_PUBLIC_URL || '',
     telegram: !!cfg.telegramToken, webhook: !!cfg.webhookUrl, version: '1.0.0',
   }));

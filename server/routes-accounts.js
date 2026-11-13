@@ -3,6 +3,7 @@ import { uid, hashPassword, verifyPassword, jparse, str, clamp, num, recoveryCod
 import { HttpError, bad, forbidden, notFound, conflict } from './http.js';
 import { insertRule, defaultRules } from './engine.js';
 
+import crypto from 'node:crypto';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -95,6 +96,12 @@ export function registerAccounts(app, ctx) {
   function register(req) {
     limit(`register:${req.ip}`, 10, 60 * 60e3);
     const first = !hasTeacher();
+    // When HADIR_SETUP_KEY is set, an empty server can only be claimed by someone who knows it.
+    const key = process.env.HADIR_SETUP_KEY;
+    if (first && key) {
+      const digest = (v) => crypto.createHash('sha256').update(String(v ?? '')).digest();
+      if (!crypto.timingSafeEqual(digest(req.body?.setup_key), digest(key))) throw forbidden('bad_setup_key', 'This server needs its setup password before the first account can be created.');
+    }
     if (!first && !registrationOpen()) throw forbidden('registration_closed', 'New educator accounts are closed on this installation. Ask the owner to open sign-up.');
     const email = str(req.body.email, 120).toLowerCase();
     const name = str(req.body.full_name, 80);
