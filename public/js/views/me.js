@@ -1,4 +1,5 @@
 // The student's home: a QR code that changes every 30 seconds, signed by this phone's own key. It works with no internet at all.
+import { checkinCard } from './me-work.js';
 import { h, icon, chip, flagChip, errorState } from '../ui.js';
 import { t, addStrings, fmtPct } from '../i18n.js';
 import { api } from '../api.js';
@@ -38,7 +39,11 @@ export default async function mount(root, params, app) {
     h('div.codecard__fine', h('span', t('me.fine')), secs), h('div.codecard__fine', h('span', [icon('wifioff', 14), ' ', t('me.offlineOk')])));
   const classes = h('div.stack');
   const remind = h('div');
-  root.append(h('div.me', h('div.me__intro', h('h1', t('me.hello', { name: user.full_name.split(' ')[0] })), h('p.muted', t('me.show'))), remind, status, card, classes));
+  const work = h('div');
+  root.append(h('div.me', h('div.me__intro', h('h1', t('me.hello', { name: user.full_name.split(' ')[0] })), h('p.muted', t('me.show'))), checkinCard(), remind, status, card, work, classes));
+  api.get('/api/student/work').then(({ summary: w }) => {
+    if (w.todo || w.marked) work.replaceChildren(h('a.notice', { href: '#/me/work' }, h('strong', t('mw.title')), h('span', [w.todo ? `${t('mw.todo')}: ${w.todo}` : null, w.overdue ? `${t('mw.overdue')}: ${w.overdue}` : null, w.marked ? `${t('mw.marks')}: ${w.marked}` : null].filter(Boolean).join(' · '))));
+  }).catch(() => {});
   api.get('/api/me/contact').then(({ contact: c }) => {
     if (!c.email && !c.phone && !c.whatsapp) remind.replaceWith(h('div.notice', h('span', t('contact.remind')), h('a.btn.btn--ghost.btn--sm', { href: '#/me/settings' }, t('contact.remindBtn'))));
   }).catch(() => {});

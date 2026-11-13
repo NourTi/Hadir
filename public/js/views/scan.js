@@ -1,4 +1,5 @@
 // Live roll call. Everything here runs on this phone: scanning, checking signatures, and saving. Uploading happens when there is a connection.
+import { checkinPanel } from './work.js';
 import { h, icon, toast, openModal, confirmDialog, empty, errorState, chip, field, loading } from '../ui.js';
 import { t, addStrings, fmtTime, fmtDateTime } from '../i18n.js';
 import { api } from '../api.js';
@@ -113,6 +114,7 @@ export default async function mount(root, params, app) {
   root.append(
     h('div.scanhead', h('div', h('a.link.small', { href: '#/today' }, '← ', t('scan.back')), title, meta), h('div.row', topicBtn, soundBtn, closeBtn)),
     tallyEl && h('div', { style: { marginBottom: '18px' } }, tallyEl),
+    isClosed() ? null : h('div', { style: { marginBottom: '18px' } }, checkinPanel(params.id)),
     h('div.scan', left, right));
 
   // ----- rendering -----

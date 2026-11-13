@@ -248,3 +248,20 @@ html[lang="ar"] .welcomenote { border-radius: 6px 0 0 6px; }
 .chat__composer { display: grid; gap: 8px; }
 .chat__composer textarea { resize: vertical; min-height: 64px; }
 .chat__reach { flex-wrap: wrap; gap: 8px; align-items: center; }
+
+/* Work and check-in */
+.grid2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.worklist { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.worklist__row { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; padding: 12px 14px; border: 1px solid var(--rule-2); border-radius: 12px; background: var(--sheet); color: inherit; text-decoration: none; }
+.worklist__row:hover { border-color: var(--stamp); }
+.worklist__row .grow { min-width: 14rem; }
+.checkin__code { font-family: var(--mono, ui-monospace, monospace); font-size: 2.6rem; font-weight: 600; letter-spacing: .12em; text-align: center; padding: 8px 0; color: var(--stamp); }
+.workitem { display: grid; gap: 6px; padding: 12px 14px; border: 1px solid var(--rule-2); border-radius: 12px; background: var(--sheet); }
+.workitem__head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 12px; }
+.workitem__score { font-size: 1.5rem; font-weight: 600; color: var(--stamp); }
+.workitem.is-overdue { border-color: var(--late-line); }
+.checkincard { display: grid; gap: 10px; padding: 16px; border: 1px solid var(--stamp); border-radius: 14px; background: var(--stamp-soft); }
+.checkincard input { font-size: 1.6rem; letter-spacing: .3em; text-align: center; }
+.stamp--none { background: var(--sheet-2); color: var(--ink-3, var(--muted)); border: 1px solid var(--rule-2); }
+.ledger select.input--sm { min-width: 8.5rem; }
+.ledger td .muted.small { white-space: nowrap; }

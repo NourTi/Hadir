@@ -220,6 +220,29 @@ CREATE TABLE IF NOT EXISTS messages (
 );
 CREATE INDEX IF NOT EXISTS idx_messages_thread ON messages (teacher_id, student_id, created_at);
 
+CREATE TABLE IF NOT EXISTS tasks (
+  id TEXT PRIMARY KEY,
+  group_id TEXT NOT NULL REFERENCES groups(id) ON DELETE CASCADE,
+  kind TEXT NOT NULL DEFAULT 'homework' CHECK (kind IN ('homework','td','project','other')),
+  title TEXT NOT NULL,
+  details TEXT,
+  due_at INTEGER,
+  max_score REAL,
+  marks_visible INTEGER NOT NULL DEFAULT 0,
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_tasks_group ON tasks (group_id, due_at);
+CREATE TABLE IF NOT EXISTS task_status (
+  task_id TEXT NOT NULL REFERENCES tasks(id) ON DELETE CASCADE,
+  student_id TEXT NOT NULL REFERENCES students(id) ON DELETE CASCADE,
+  status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending','presented','late','missing','excused')),
+  score REAL,
+  feedback TEXT,
+  updated_at INTEGER NOT NULL,
+  PRIMARY KEY (task_id, student_id)
+);
+
 CREATE TABLE IF NOT EXISTS kv (key TEXT PRIMARY KEY, value TEXT);
 CREATE TABLE IF NOT EXISTS demo_keys (student_id TEXT PRIMARY KEY, device_id TEXT NOT NULL, private_jwk TEXT NOT NULL);
 `;
@@ -232,6 +255,7 @@ export function openDb(file) {
   for (const col of ['join_token TEXT', 'join_open INTEGER NOT NULL DEFAULT 1']) { try { raw.exec(`ALTER TABLE groups ADD COLUMN ${col}`); } catch { /* already there */ } }
   for (const col of ['token_ver INTEGER NOT NULL DEFAULT 0', 'is_owner INTEGER NOT NULL DEFAULT 0', 'recovery_hash TEXT', 'failed_logins INTEGER NOT NULL DEFAULT 0', 'locked_until INTEGER NOT NULL DEFAULT 0', 'last_login INTEGER']) { try { raw.exec(`ALTER TABLE users ADD COLUMN ${col}`); } catch { /* already there */ } }
   try { raw.exec('ALTER TABLE students ADD COLUMN whatsapp TEXT'); } catch { /* already there */ }
+  try { raw.exec('ALTER TABLE sessions ADD COLUMN checkin_open INTEGER NOT NULL DEFAULT 0'); } catch { /* already there */ }
   // An install made before accounts existed: its first teacher is the owner.
   raw.exec("UPDATE users SET is_owner = 1 WHERE id = (SELECT id FROM users WHERE role IN ('teacher','admin') ORDER BY created_at LIMIT 1) AND NOT EXISTS (SELECT 1 FROM users WHERE is_owner = 1)");
   const cache = new Map();

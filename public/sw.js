@@ -1,5 +1,5 @@
 // Hadir service worker: the app shell is cached so the app opens, and roll call keeps working, with no connection.
-const VERSION = 'hadir-v4';
+const VERSION = 'hadir-v5';
 const SHELL = ['/app/', '/manifest.webmanifest', '/css/base.css', '/css/app.css', '/css/theme.css', '/css/fonts.css', '/icons/icon.svg', '/icons/icon-180.png', '/icons/icon-192.png', '/icons/icon-512.png',
   ...['app', 'api', 'clock', 'crypto', 'device', 'i18n', 'kit', 'offline', 'qr', 'qrdecode', 'roll', 'scanner', 'store', 'strings-app', 'strings-accounts', 'educator', 'ui'].map((n) => `/js/${n}.js`),
   ...['auth', 'today', 'scan', 'classes', 'session', 'studentcard', 'grades', 'excuses', 'automation', 'reports', 'settings', 'settings-educator', 'join', 'access', 'me', 'me-attendance', 'me-grades', 'me-excuses'].map((n) => `/js/views/${n}.js`)];

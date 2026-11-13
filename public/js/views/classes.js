@@ -2,6 +2,7 @@
 import { h, icon, toast, openModal, confirmDialog, empty, chip, flagChip, field, loading, downloadBlob, toCsv } from '../ui.js';
 import { t, addStrings, lang, fmtPct, fmtDateTime } from '../i18n.js';
 import { api } from '../api.js';
+import { workTab } from './work.js';
 import { pageHead, sheet, tabs, select, avatar, parseRoster, rateText, subjectList } from '../kit.js';
 import { startOrResume } from '../offline.js';
 
@@ -139,11 +140,11 @@ async function detail(root, id, app) {
         h('button.btn.btn--ghost', { type: 'button', onclick: () => importModal(group, reload) }, icon('upload', 16), t('cls.import')),
         h('button.btn.btn--ghost', { type: 'button', onclick: () => groupModal(group, async (g) => { group = { ...group, ...g }; toast(t('cls.saved'), 'ok'); draw(); }) }, icon('edit', 16), t('cls.edit')),
         h('button.btn.btn--primary', { type: 'button', onclick: async () => { try { const s = await startOrResume(group.id); app.go(`/scan/${s.id}`); } catch (e) { toast(e.code === 'no_bundle' ? t('today.readyNoneText') : e.message, 'error'); } } }, icon('scan', 16), t('cls.start'))),
-      h('div.stack', tabs([{ id: 'roster', label: `${t('cls.tab.roster')} ${students.length}` }, { id: 'sessions', label: `${t('cls.tab.sessions')} ${sessions.length}` }], tab, (x) => { tab = x; draw(); }), body));
+      h('div.stack', tabs([{ id: 'roster', label: `${t('cls.tab.roster')} ${students.length}` }, { id: 'sessions', label: `${t('cls.tab.sessions')} ${sessions.length}` }, { id: 'work', label: t('work.tab') }], tab, (x) => { tab = x; draw(); }), body));
     paint();
   };
   const paint = () => {
-    body.replaceChildren(tab === 'roster' ? rosterView() : sessionsView());
+    body.replaceChildren(tab === 'roster' ? rosterView() : tab === 'work' ? workTab(group) : sessionsView());
   };
   const reload = async () => { const r = await api.get(`/api/groups/${id}/roster`); students = r.students; group = r.group; draw(); };
 

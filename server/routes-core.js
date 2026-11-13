@@ -6,7 +6,7 @@ import { insertRule, defaultRules } from './engine.js';
 import { applyScan, applyMark, finalizeSession, sessionAttendance, STATUSES } from './attendance.js';
 import { groupStats, flagFor } from './stats.js';
 
-const TOKEN_TTL = 30 * 24 * 3600;
+const TOKEN_TTL = 180 * 24 * 3600; // students stay signed in; the app renews this on every visit
 const TEACHER_TTL = 30 * 24 * 3600; // renewed on every visit, so an active educator stays signed in
 const LOCK_AFTER = 8, LOCK_MS = 10 * 60e3;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
