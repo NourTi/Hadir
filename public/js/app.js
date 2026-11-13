@@ -11,6 +11,7 @@ import { applyAccent, fullName, institutionLine } from './educator.js';
 const root = document.getElementById('root');
 const themeCtl = theme();
 let renewTimer = null, renewBound = false;
+window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); window.__hadirInstall = e; });
 const app = { config: {}, user: null, setTitle, go, refreshBadges, openInbox, signOut, onSignedIn, rebuild };
 let stopView = null, navToken = 0, shell = null, badgeTimer = null;
 

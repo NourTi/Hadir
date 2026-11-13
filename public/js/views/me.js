@@ -24,6 +24,18 @@ addStrings({
   },
 });
 
+// One-tap return: offer to add Hadir to the home screen once, unless it already is or the student said not now.
+function installBanner(into) {
+  let hidden = false;
+  try { hidden = localStorage.getItem('hadir:install-dismissed') === '1'; } catch { /* storage blocked */ }
+  if (hidden || window.matchMedia?.('(display-mode: standalone)').matches || navigator.standalone) return;
+  const prompt = window.__hadirInstall;
+  const box = h('div.notice', h('strong', t('install.title')), h('span', t('install.text')), prompt ? null : h('span.muted.small', t('install.ios')),
+    h('div.row', prompt ? h('button.btn.btn--primary.btn--sm', { type: 'button', onclick: async () => { prompt.prompt(); await prompt.userChoice.catch(() => {}); box.remove(); } }, t('install.btn')) : null,
+      h('button.btn.btn--ghost.btn--sm', { type: 'button', onclick: () => { try { localStorage.setItem('hadir:install-dismissed', '1'); } catch { /* ignore */ } box.remove(); } }, t('install.later'))));
+  into.after(box);
+}
+
 export default async function mount(root, params, app) {
   app.setTitle(t('nav.myCode'));
   const user = app.user;
@@ -45,8 +57,10 @@ export default async function mount(root, params, app) {
     if (w.todo || w.marked) work.replaceChildren(h('a.notice', { href: '#/me/work' }, h('strong', t('mw.title')), h('span', [w.todo ? `${t('mw.todo')}: ${w.todo}` : null, w.overdue ? `${t('mw.overdue')}: ${w.overdue}` : null, w.marked ? `${t('mw.marks')}: ${w.marked}` : null].filter(Boolean).join(' · '))));
   }).catch(() => {});
   api.get('/api/me/contact').then(({ contact: c }) => {
-    if (!c.email && !c.phone && !c.whatsapp) remind.replaceWith(h('div.notice', h('span', t('contact.remind')), h('a.btn.btn--ghost.btn--sm', { href: '#/me/settings' }, t('contact.remindBtn'))));
+    const text = !c.registration_no ? t('contact.regRemind') : (!c.email && !c.phone && !c.whatsapp ? t('contact.remind') : null);
+    if (text) remind.replaceWith(h('div.notice', h('span', text), h('a.btn.btn--ghost.btn--sm', { href: '#/me/settings' }, t('contact.remindBtn'))));
   }).catch(() => {});
+  installBanner(work);
 
   let stamp = 0, code = '';
   const render = async () => {

@@ -41,6 +41,7 @@ Calling names costs ten minutes of every class, and "my network failed" is the u
 | **Contact and messages** | Students add email, phone and WhatsApp (all optional). Each student has a private two-way chat with their educator, with unread badges and a Telegram alert. |
 | **Work and TD tracking** | Create homework, TDs and projects per group. Each student gets a status (pending, presented, late, missing, excused), a mark and feedback, shown only when you publish. Tasks can be copied to another group. |
 | **Check-in code** | Open roll call, students get a notification and type a 6-digit code that changes every 30 seconds. They are marked present without a scan. |
+| **Backup and restore** | The owner downloads a full backup and can restore it onto any server in one step, which protects free hosting that resets. |
 | **Educator portals** | Sign-up for any educator. Title, university, faculty, department, subjects, colour, defaults for new classes, and a welcome note students see. Educators never see each other's data. |
 | **Grades** | Weighted assessments out of 20, CEFR levels for writing and speaking, feedback, and grades students only see once published. |
 | **Excuses** | Students upload proof (PDF or image). One-tap approve or refuse, with a note. |

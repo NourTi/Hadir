@@ -108,15 +108,35 @@ export async function contactCard() {
   const box = h('div.stack');
   let c = {};
   try { c = (await api.get('/api/me/contact')).contact; } catch { /* offline: show an empty form */ }
+  const reg = h('input.input', { value: c.registration_no || '', dir: 'ltr', maxlength: 30, autocomplete: 'off', placeholder: 'CU3201…' });
   const email = h('input.input', { type: 'email', autocomplete: 'email', value: c.email || '', dir: 'ltr' });
   const phone = h('input.input', { type: 'tel', autocomplete: 'tel', value: c.phone || '', dir: 'ltr', placeholder: '+213 555 12 34 56' });
   const wa = h('input.input', { type: 'tel', value: c.whatsapp || '', dir: 'ltr', placeholder: '+213 555 12 34 56' });
   const err = h('p.form-error', { role: 'alert' });
   const f = h('form.stack', { onsubmit: async (e) => {
     e.preventDefault(); err.textContent = '';
-    try { await api.put('/api/me/contact', { email: email.value, phone: phone.value, whatsapp: wa.value }); toast(t('contact.saved'), 'ok'); } catch (er) { err.textContent = er.message; }
-  } }, h('p.muted.small', t('contact.text')), field(t('contact.email'), email), field(t('contact.phone'), phone), field(t('contact.whatsapp'), wa), h('p.muted.small', t('contact.telegram')), err,
+    try { await api.put('/api/me/contact', { registration_no: reg.value, email: email.value, phone: phone.value, whatsapp: wa.value }); toast(t('contact.saved'), 'ok'); } catch (er) { err.textContent = er.message; }
+  } }, h('p.muted.small', t('contact.text')), field(t('contact.reg'), reg, t('contact.regHint')), field(t('contact.email'), email), field(t('contact.phone'), phone), field(t('contact.whatsapp'), wa), h('p.muted.small', t('contact.telegram')), err,
   h('p.muted.small', t('contact.consent')), h('div.row', h('button.btn.btn--primary', { type: 'submit' }, t('common.save'))));
   box.append(f);
   return sheet(t('contact.title'), box);
+}
+
+// Owner only: bring back a downloaded backup.
+export function restoreRow(app) {
+  const file = h('input', { type: 'file', accept: '.db,application/octet-stream', hidden: true });
+  file.onchange = async () => {
+    const f = file.files[0]; file.value = '';
+    if (!f) return;
+    if (!(await confirmDialog({ title: t('rst.title'), message: t('rst.warn', { name: f.name }), confirmLabel: t('rst.go'), danger: true }))) return;
+    try {
+      const bytes = new Uint8Array(await f.arrayBuffer());
+      let bin = ''; for (let i = 0; i < bytes.length; i += 32768) bin += String.fromCharCode(...bytes.subarray(i, i + 32768));
+      const r = await api.post('/api/restore', { data: btoa(bin) });
+      toast(t('rst.done', { s: r.counts.students, g: r.counts.groups, a: r.counts.attendance }), 'ok');
+      setTimeout(() => app.signOut(), 2200);
+    } catch (e) { toast(e.message, 'error'); }
+  };
+  return h('div.row.row--between', h('div', h('strong', t('rst.title')), h('p.muted.small', t('rst.text'))),
+    h('button.btn.btn--ghost', { type: 'button', onclick: () => file.click() }, icon('upload', 16), t('rst.btn')), file);
 }

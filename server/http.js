@@ -57,7 +57,7 @@ export class App {
   del(p, ...h) { this.route('DELETE', p, ...h); }
 
   readBody(req) {
-    const cap = this.bigPaths.includes(req.path) ? this.bigBody : this.maxBody;
+    const cap = req.path === '/api/restore' ? 48 * 1024 * 1024 : this.bigPaths.includes(req.path) ? this.bigBody : this.maxBody;
     return new Promise((resolve, reject) => {
       const chunks = []; let size = 0, over = false;
       req.on('data', (c) => {

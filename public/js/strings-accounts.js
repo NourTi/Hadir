@@ -42,6 +42,10 @@ addStrings({
     'contact.email': 'Email', 'contact.phone': 'Phone number', 'contact.whatsapp': 'WhatsApp number', 'contact.telegram': 'Telegram chat id is set under Telegram below.', 'contact.saved': 'Contact details saved.',
     'contact.consent': 'By saving, you agree that your educator may contact you about this course.',
     'contact.remind': 'Add your email or phone so your educator can reach you.', 'contact.remindBtn': 'Add details',
+    'rst.title': 'Restore from a backup', 'rst.text': 'Upload a backup file you downloaded earlier. This replaces everything on this server.', 'rst.btn': 'Choose backup file',
+    'rst.warn': 'Restore "{name}"? Everything currently on this server is replaced by the backup. A safety copy is kept if backups are enabled. You will be signed out, then sign in with the account from the backup.', 'rst.go': 'Restore', 'rst.done': 'Restored: {s} students, {g} groups, {a} attendance records. Signing you out.',
+    'contact.reg': 'Student ID number', 'contact.regHint': 'Your registration number as on your student card.', 'contact.regRemind': 'Add your student ID number so your educator has your full details.',
+    'install.title': 'Add Hadir to your home screen', 'install.text': 'Next time, open it in one tap. You stay signed in.', 'install.btn': 'Add now', 'install.ios': 'On iPhone: tap Share, then Add to Home Screen. On Android: open the browser menu, then Add to Home screen.', 'install.later': 'Not now',
   },
   ar: {
     'acc.createTitle': 'أنشئ حساب الأستاذ', 'acc.createFirst': 'أنشئ أول حساب أستاذ',
@@ -83,5 +87,9 @@ addStrings({
     'contact.email': 'البريد الإلكتروني', 'contact.phone': 'رقم الهاتف', 'contact.whatsapp': 'رقم واتساب', 'contact.telegram': 'معرّف تيليغرام يُضبط في قسم تيليغرام أدناه.', 'contact.saved': 'تم حفظ بيانات التواصل.',
     'contact.consent': 'بالحفظ توافق على أن يتواصل معك أستاذك بخصوص هذه المادة.',
     'contact.remind': 'أضف بريدك أو هاتفك ليتمكن أستاذك من الوصول إليك.', 'contact.remindBtn': 'إضافة البيانات',
+    'rst.title': 'الاستعادة من نسخة احتياطية', 'rst.text': 'ارفع ملف نسخة احتياطية نزّلته سابقًا. هذا يستبدل كل ما في هذا الخادم.', 'rst.btn': 'اختيار ملف النسخة',
+    'rst.warn': 'استعادة «{name}»؟ سيُستبدل كل ما في هذا الخادم حاليًا بالنسخة الاحتياطية. تُحفظ نسخة أمان إن كانت النسخ الاحتياطية مفعّلة. سيتم تسجيل خروجك، ثم ادخل بحساب النسخة الاحتياطية.', 'rst.go': 'استعادة', 'rst.done': 'تمت الاستعادة: {s} طالبًا و{g} أفواج و{a} سجل حضور. سيتم تسجيل خروجك.',
+    'contact.reg': 'رقم التسجيل الجامعي', 'contact.regHint': 'رقم تسجيلك كما في بطاقة الطالب.', 'contact.regRemind': 'أضف رقم تسجيلك الجامعي ليكون لدى أستاذك بياناتك كاملة.',
+    'install.title': 'أضف «حاضر» إلى شاشتك الرئيسية', 'install.text': 'في المرة القادمة تفتحه بضغطة واحدة وتبقى مسجّلًا.', 'install.btn': 'أضفه الآن', 'install.ios': 'على آيفون: اضغط مشاركة ثم «إضافة إلى الشاشة الرئيسية». على أندرويد: افتح قائمة المتصفح ثم «إضافة إلى الشاشة الرئيسية».', 'install.later': 'ليس الآن',
   },
 });

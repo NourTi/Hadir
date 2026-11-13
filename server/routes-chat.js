@@ -12,15 +12,17 @@ export function registerChat(app, ctx) {
   const { limit } = ctx.helpers;
 
   // ---------- contact details (the student's own) ----------
-  const contactOf = (s) => ({ email: s.email || '', phone: s.phone || '', whatsapp: s.whatsapp || '', telegram_chat_id: s.telegram_chat_id || '' });
+  const contactOf = (s) => ({ registration_no: s.registration_no || '', email: s.email || '', phone: s.phone || '', whatsapp: s.whatsapp || '', telegram_chat_id: s.telegram_chat_id || '' });
   app.get('/api/me/contact', student, (req) => ({ contact: contactOf(req.student) }));
   app.put('/api/me/contact', student, (req) => {
     const b = req.body || {};
+    const registration_no = str(b.registration_no, 30).replace(/\s+/g, '');
+    if (registration_no && !/^[A-Za-z0-9._/-]{4,30}$/.test(registration_no)) throw bad('bad_registration', 'The student ID number should be 4 to 30 letters or digits, with no spaces.');
     const email = str(b.email, 120), phone = str(b.phone, 24), whatsapp = str(b.whatsapp, 24);
     if (email && !EMAIL.test(email)) throw bad('bad_email', 'That email address does not look right.');
     if (phone && !PHONE.test(phone)) throw bad('bad_phone', 'Enter the phone number with digits only, for example +213 555 12 34 56.');
     if (whatsapp && !PHONE.test(whatsapp)) throw bad('bad_whatsapp', 'Enter the WhatsApp number with digits only, for example +213 555 12 34 56.');
-    db.run('UPDATE students SET email = ?, phone = ?, whatsapp = ? WHERE id = ?', email || null, phone || null, whatsapp || null, req.student.id);
+    db.run('UPDATE students SET registration_no = ?, email = ?, phone = ?, whatsapp = ? WHERE id = ?', registration_no || null, email || null, phone || null, whatsapp || null, req.student.id);
     return { contact: contactOf(db.get('SELECT * FROM students WHERE id = ?', req.student.id)) };
   });
 
@@ -65,7 +67,7 @@ export function registerChat(app, ctx) {
     const mine = req.user.role === 'student' ? 'student' : 'teacher';
     db.run('UPDATE messages SET read_at = ? WHERE teacher_id = ? AND student_id = ? AND sender != ? AND read_at IS NULL', Date.now(), teacherId, studentId, mine);
     const messages = db.all('SELECT id, sender, body, created_at, read_at FROM messages WHERE teacher_id = ? AND student_id = ? ORDER BY created_at DESC LIMIT 200', teacherId, studentId).reverse();
-    const peer = req.user.role === 'student' ? { name: teacherName(teacherId) } : db.get('SELECT full_name AS name, university_id, email, phone, whatsapp FROM students WHERE id = ?', studentId);
+    const peer = req.user.role === 'student' ? { name: teacherName(teacherId) } : db.get('SELECT full_name AS name, university_id, registration_no, email, phone, whatsapp FROM students WHERE id = ?', studentId);
     return { peer, messages };
   });
   app.post('/api/chat/:peer', anyone, (req) => {

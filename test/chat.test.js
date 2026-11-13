@@ -34,6 +34,9 @@ test('contact details and a private two-way chat', async () => {
   const ok = await call('PUT', '/api/me/contact', { email: 's1@example.org', phone: '+213 555 12 34 56', whatsapp: '0555123456' }, stoken);
   assert.equal(ok.status, 200);
   assert.equal(ok.data.contact.email, 's1@example.org');
+  assert.equal((await call('PUT', '/api/me/contact', { registration_no: 'bad id!' }, stoken)).status, 400);
+  const reg = await call('PUT', '/api/me/contact', { registration_no: 'CU32012026262638482009', email: 's1@example.org', phone: '+213 555 12 34 56', whatsapp: '0555123456' }, stoken);
+  assert.equal(reg.data.contact.registration_no, 'CU32012026262638482009');
   assert.equal((await call('GET', '/api/me/contact', undefined, t.token)).status, 403, 'educators have no student contact route');
 
   // chat

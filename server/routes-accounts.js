@@ -3,13 +3,17 @@ import { uid, hashPassword, verifyPassword, jparse, str, clamp, num, recoveryCod
 import { HttpError, bad, forbidden, notFound, conflict } from './http.js';
 import { insertRule, defaultRules } from './engine.js';
 
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import { DatabaseSync } from 'node:sqlite';
 export const ACCENTS = ['green', 'ink', 'plum', 'clay', 'teal', 'slate', 'ocean', 'royal', 'indigo', 'violet', 'rose', 'crimson', 'ember', 'amber', 'olive', 'forest', 'sage', 'bronze', 'graphite', 'midnight'];
 const TITLES = ['', 'Mr', 'Ms', 'Dr', 'Prof', 'Assoc. Prof', 'Asst. Lecturer'];
 const EMAIL = /^[^@\s]{1,64}@[^@\s]+\.[^@\s]{2,}$/;
 const RESET_TTL = 24 * 3600e3;
 
 export function registerAccounts(app, ctx) {
-  const { db, cfg } = ctx;
+  const { db, cfg, engine } = ctx;
   const { teacher, owner, anyone } = ctx.auth;
   const { session, limit, profileOf } = ctx.helpers;
   const registrationOpen = () => db.kvGet('registration_open') !== '0';
@@ -17,6 +21,51 @@ export function registerAccounts(app, ctx) {
 
   // Sliding session: the app calls this on every start and while it is open, so the sign-in never expires during normal use.
   app.post('/api/auth/refresh', anyone, (req) => session(req.user));
+
+
+  // Restore a backup file (owner only). Replaces everything except this server's signing key and public address.
+  app.post('/api/restore', owner, (req) => {
+    const data = req.body?.data;
+    if (typeof data !== 'string' || !data) throw bad('no_file', 'Choose a backup file first.');
+    const buf = Buffer.from(data, 'base64');
+    if (buf.length < 4096 || buf.subarray(0, 15).toString('latin1') !== 'SQLite format 3') throw bad('not_backup', 'That file is not a Hadir backup.');
+    const tmp = path.join(os.tmpdir(), `hadir-restore-${uid()}.db`);
+    fs.writeFileSync(tmp, buf);
+    try {
+      const chk = new DatabaseSync(tmp, { readOnly: true });
+      let have;
+      try { have = chk.prepare("SELECT name FROM sqlite_master WHERE type = 'table'").all().map((r) => r.name); } finally { chk.close(); }
+      for (const need of ['users', 'students', 'groups', 'sessions', 'attendance']) if (!have.includes(need)) throw bad('not_backup', 'That file is not a Hadir backup.');
+      try { engine.backup('before-restore'); } catch { /* the safety copy is best effort */ }
+      const q = (n) => `"${String(n).replace(/"/g, '""')}"`;
+      const live = db.all("SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%'").map((r) => r.name);
+      const counts = {};
+      db.raw.exec('PRAGMA foreign_keys = OFF');
+      db.raw.exec(`ATTACH DATABASE '${tmp.replace(/'/g, "''")}' AS bk`);
+      try {
+        db.raw.exec('BEGIN IMMEDIATE');
+        try {
+          for (const tname of live) {
+            if (!have.includes(tname)) continue;
+            const mine = db.raw.prepare(`PRAGMA main.table_info(${q(tname)})`).all().map((c) => c.name);
+            const theirs = new Set(db.raw.prepare(`PRAGMA bk.table_info(${q(tname)})`).all().map((c) => c.name));
+            const cols = mine.filter((c) => theirs.has(c)).map(q).join(', ');
+            if (!cols) continue;
+            const keep = tname === 'kv' ? " WHERE key NOT IN ('secret', 'public_url')" : '';
+            db.raw.exec(`DELETE FROM main.${q(tname)}${keep}`);
+            db.raw.exec(`INSERT OR REPLACE INTO main.${q(tname)} (${cols}) SELECT ${cols} FROM bk.${q(tname)}${keep}`);
+            counts[tname] = db.raw.prepare(`SELECT COUNT(*) AS n FROM main.${q(tname)}`).get().n;
+          }
+          db.raw.exec('COMMIT');
+        } catch (e) { db.raw.exec('ROLLBACK'); throw e; }
+      } finally {
+        db.raw.exec('DETACH DATABASE bk');
+        db.raw.exec('PRAGMA foreign_keys = ON');
+      }
+      db.audit(null, 'system.restore', 'system', null, null, { students: counts.students ?? 0, sessions: counts.sessions ?? 0 });
+      return { ok: true, counts: { students: counts.students ?? 0, groups: counts.groups ?? 0, sessions: counts.sessions ?? 0, attendance: counts.attendance ?? 0 } };
+    } finally { fs.rmSync(tmp, { force: true }); }
+  });
 
   const cleanProfile = (b = {}, base = {}) => {
     const subjects = (Array.isArray(b.subjects) ? b.subjects : typeof b.subjects === 'string' ? b.subjects.split(/[,;\n،]/) : base.subjects || [])

@@ -20,7 +20,7 @@ export default async function mount(root, params, app) {
   app.setTitle(r.student.full_name);
   root.append(
     h('p.small.no-print', h('a.link', { href: 'javascript:history.back()' }, '← ', t('nav.classes'))),
-    pageHead(r.student.full_name, `${[r.student.university_id, r.student.email, r.student.phone].filter(Boolean).join(' · ')}`, h('div.row', h('a.btn.btn--ghost.no-print', { href: `#/chat/${r.student.id}` }, icon('send', 16), t('chat.write')), h('button.btn.btn--ghost', { type: 'button', onclick: printPage }, icon('print', 16), t('card.print')))),
+    pageHead(r.student.full_name, `${[r.student.university_id, r.student.registration_no, r.student.email, r.student.phone].filter(Boolean).join(' · ')}`, h('div.row', h('a.btn.btn--ghost.no-print', { href: `#/chat/${r.student.id}` }, icon('send', 16), t('chat.write')), h('button.btn.btn--ghost', { type: 'button', onclick: printPage }, icon('print', 16), t('card.print')))),
     h('div.stack.stack--lg', r.groups.map((x) => {
       const gb = x.grades;
       return h('section.stack', h('div.row.row--between', h('h2', x.group.name), flagChip(x.flag)),

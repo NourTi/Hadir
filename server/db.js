@@ -255,6 +255,7 @@ export function openDb(file) {
   for (const col of ['join_token TEXT', 'join_open INTEGER NOT NULL DEFAULT 1']) { try { raw.exec(`ALTER TABLE groups ADD COLUMN ${col}`); } catch { /* already there */ } }
   for (const col of ['token_ver INTEGER NOT NULL DEFAULT 0', 'is_owner INTEGER NOT NULL DEFAULT 0', 'recovery_hash TEXT', 'failed_logins INTEGER NOT NULL DEFAULT 0', 'locked_until INTEGER NOT NULL DEFAULT 0', 'last_login INTEGER']) { try { raw.exec(`ALTER TABLE users ADD COLUMN ${col}`); } catch { /* already there */ } }
   try { raw.exec('ALTER TABLE students ADD COLUMN whatsapp TEXT'); } catch { /* already there */ }
+  try { raw.exec('ALTER TABLE students ADD COLUMN registration_no TEXT'); } catch { /* already there */ }
   try { raw.exec('ALTER TABLE sessions ADD COLUMN checkin_open INTEGER NOT NULL DEFAULT 0'); } catch { /* already there */ }
   // An install made before accounts existed: its first teacher is the owner.
   raw.exec("UPDATE users SET is_owner = 1 WHERE id = (SELECT id FROM users WHERE role IN ('teacher','admin') ORDER BY created_at LIMIT 1) AND NOT EXISTS (SELECT 1 FROM users WHERE is_owner = 1)");

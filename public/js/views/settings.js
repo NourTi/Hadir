@@ -2,7 +2,7 @@
 import { h, icon, toast, confirmDialog, empty, chip, field, downloadBlob, theme } from '../ui.js';
 import { t, addStrings, setLang, lang, fmtDateTime } from '../i18n.js';
 import { api, saveAuth, auth } from '../api.js';
-import { profileCard, recoveryCard, exportCard, ownerCard, addressCard, contactCard } from './settings-educator.js';
+import { profileCard, recoveryCard, exportCard, ownerCard, addressCard, contactCard, restoreRow } from './settings-educator.js';
 import '../strings-accounts.js';
 import { pageHead, sheet, select, defList } from '../kit.js';
 
@@ -80,7 +80,7 @@ export default async function mount(root, params, app) {
     if (app.user.is_owner) stack.append(await ownerCard(app), addressCard(app));
     stack.append(exportCard());
     stack.append(card(t('set.data'),
-      app.user.is_owner ? [h('div.row.row--between', h('div', h('strong', t('set.backup')), h('p.muted.small', t('set.backupText'))), h('button.btn.btn--ghost', { type: 'button', onclick: async () => { try { downloadBlob(await api.blob('/api/export/backup'), `hadir-backup-${new Date().toISOString().slice(0, 10)}.db`); } catch (e) { toast(e.message, 'error'); } } }, icon('download', 16), t('set.backup'))), h('hr.rule')] : null, h('strong', t('set.audit')), auditBox,
+      app.user.is_owner ? [h('div.row.row--between', h('div', h('strong', t('set.backup')), h('p.muted.small', t('set.backupText'))), h('button.btn.btn--ghost', { type: 'button', onclick: async () => { try { downloadBlob(await api.blob('/api/export/backup'), `hadir-backup-${new Date().toISOString().slice(0, 10)}.db`); } catch (e) { toast(e.message, 'error'); } } }, icon('download', 16), t('set.backup'))), restoreRow(app), h('hr.rule')] : null, h('strong', t('set.audit')), auditBox,
       app.config?.demo ? [h('hr.rule'), h('div.row.row--between', h('div', h('strong', t('set.demo')), h('p.muted.small', t('set.demoText'))), h('button.btn.btn--ghost', { type: 'button', onclick: async () => { if (await confirmDialog({ title: t('set.demoReset'), message: t('set.demoConfirm'), confirmLabel: t('set.demoReset'), danger: true })) { await api.post('/api/demo/reset', {}); toast(t('set.demoOk'), 'ok'); app.go('/today'); } } }, icon('flask', 16), t('set.demoReset')))] : null));
   }
   stack.append(h('div.row', h('button.btn.btn--ghost', { type: 'button', onclick: () => app.signOut() }, icon('logout', 16), t('set.signOut'))));
